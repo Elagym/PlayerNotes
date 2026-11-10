@@ -92,4 +92,4 @@ Please [open an issue](https://github.com/Elagym/PlayerNotes/issues) with:
 
 ## Licence
 
-*To be decided.*
+PlayerNotes is released under the [MIT License](LICENSE).
