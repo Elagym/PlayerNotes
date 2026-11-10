@@ -1,5 +1,7 @@
 # PlayerNotes
 
+![PlayerNotes](media/banner.png)
+
 **Remember who you played with.** PlayerNotes keeps private notes and categories on other players for WoW Forever. When one of them invites you, joins your group, shows up in the group finder or walks past you, it reminds you what you wrote.
 
 Your notes stay on your computer. Nothing is sent to the server or to other players, and reminders appear only in your own chat window.

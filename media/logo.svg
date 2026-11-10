@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbe3a0"/>
+      <stop offset="0.3" stop-color="#d9a84a"/>
+      <stop offset="0.55" stop-color="#8f5f1f"/>
+      <stop offset="0.8" stop-color="#e9bf62"/>
+      <stop offset="1" stop-color="#7a4d16"/>
+    </linearGradient>
+    <radialGradient id="night" cx="0.5" cy="0.42" r="0.7">
+      <stop offset="0" stop-color="#2e3f66"/>
+      <stop offset="0.6" stop-color="#16203a"/>
+      <stop offset="1" stop-color="#090d1a"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6fb4ff" stop-opacity="0.45"/>
+      <stop offset="0.55" stop-color="#3a6fd0" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#3a6fd0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="parchment" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#fbf0d2"/>
+      <stop offset="0.6" stop-color="#ead29a"/>
+      <stop offset="1" stop-color="#cfa865"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c79a55"/>
+      <stop offset="1" stop-color="#f3dfae"/>
+    </linearGradient>
+    <linearGradient id="feather" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#d9d2f0"/>
+      <stop offset="0.5" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#b9a7e8"/>
+    </linearGradient>
+    <radialGradient id="green" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#8dff9c"/>
+      <stop offset="0.45" stop-color="#25b54a"/>
+      <stop offset="1" stop-color="#0b5a22"/>
+    </radialGradient>
+    <radialGradient id="red" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ff9a8a"/>
+      <stop offset="0.45" stop-color="#d9302a"/>
+      <stop offset="1" stop-color="#6a0f0f"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <symbol id="sparkle" viewBox="-10 -10 20 20">
+      <path d="M0,-10 Q1.5,-1.5 10,0 Q1.5,1.5 0,10 Q-1.5,1.5 -10,0 Q-1.5,-1.5 0,-10 Z" fill="#fff4c8"/>
+    </symbol>
+  </defs>
+
+  <!-- Gold frame and night-sky field -->
+  <rect x="6" y="6" width="500" height="500" rx="64" fill="url(#gold)"/>
+  <rect x="6" y="6" width="500" height="500" rx="64" fill="none" stroke="#3b2408" stroke-width="3"/>
+  <rect x="26" y="26" width="460" height="460" rx="46" fill="#2a1a06"/>
+  <rect x="30" y="30" width="452" height="452" rx="43" fill="url(#night)"/>
+  <circle cx="256" cy="262" r="230" fill="url(#glow)"/>
+  <g fill="#cfe3ff" opacity="0.7">
+    <circle cx="78" cy="330" r="1.6"/><circle cx="430" cy="78" r="1.4"/><circle cx="95" cy="430" r="1.2"/>
+    <circle cx="450" cy="300" r="1.5"/><circle cx="190" cy="62" r="1.2"/><circle cx="66" cy="200" r="1.3"/>
+    <circle cx="350" cy="455" r="1.3"/><circle cx="460" cy="200" r="1.1"/>
+  </g>
+  <rect x="30" y="30" width="452" height="452" rx="43" fill="none" stroke="#ffe6a6" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- The note -->
+  <g transform="rotate(-7 250 262)" filter="url(#shadow)">
+    <path d="M128,108 H322 L366,152 V414 H128 Z" fill="url(#parchment)" stroke="#7d5424" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M322,108 V152 H366 Z" fill="url(#fold)" stroke="#7d5424" stroke-width="3" stroke-linejoin="round"/>
+    <g stroke="#5a3a17" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.75">
+      <path d="M178,178 H300" stroke-dasharray="34 10 22 10 48 0"/>
+      <path d="M156,214 H336" stroke-dasharray="20 10 44 10 30 10 52 0"/>
+      <path d="M178,250 H330" stroke-dasharray="40 10 26 10 58 0"/>
+      <path d="M156,286 H318" stroke-dasharray="28 10 50 10 36 0"/>
+      <path d="M178,322 H336" stroke-dasharray="22 10 30 10 44 10 34 0"/>
+      <path d="M156,358 H262" stroke-dasharray="36 10 54 0"/>
+    </g>
+    <circle cx="158" cy="178" r="7" fill="#2fb24f" stroke="#0e4a1c" stroke-width="2"/>
+    <circle cx="158" cy="250" r="7" fill="#d9302a" stroke="#5a0d0d" stroke-width="2"/>
+    <circle cx="158" cy="322" r="7" fill="#e0b040" stroke="#6a4a10" stroke-width="2"/>
+  </g>
+
+  <!-- Quill -->
+  <g transform="translate(276 392) rotate(36)" filter="url(#soft)">
+    <path d="M0,-70 C-44,-120 -46,-230 0,-318 C30,-250 34,-140 0,-70 Z" fill="url(#feather)" stroke="#6e5aa8" stroke-width="2.5"/>
+    <g stroke="#8a78c4" stroke-width="2" opacity="0.7" fill="none">
+      <path d="M0,-110 L-26,-140"/><path d="M0,-140 L-32,-172"/><path d="M0,-170 L-32,-204"/>
+      <path d="M0,-200 L-28,-236"/><path d="M0,-230 L-20,-264"/>
+      <path d="M0,-120 L20,-148"/><path d="M0,-152 L24,-182"/><path d="M0,-184 L22,-216"/>
+      <path d="M0,-216 L16,-246"/>
+    </g>
+    <line x1="0" y1="-40" x2="0" y2="-300" stroke="#f6f0ff" stroke-width="4" stroke-linecap="round"/>
+    <line x1="0" y1="-40" x2="0" y2="-300" stroke="#7a68b8" stroke-width="1.2"/>
+    <path d="M0,4 L-7,-34 Q0,-46 7,-34 Z" fill="#2b2238" stroke="#d9a84a" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="-8" y="-52" width="16" height="12" rx="3" fill="url(#gold)" stroke="#5a3a10" stroke-width="1.5"/>
+  </g>
+  <path d="M270,398 q-14,10 -30,6" stroke="#2b2238" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.8"/>
+
+  <!-- Positive badge -->
+  <g transform="translate(118 120)" filter="url(#soft)">
+    <circle r="50" fill="url(#gold)" stroke="#3b2408" stroke-width="3"/>
+    <circle r="40" fill="url(#green)" stroke="#06300f" stroke-width="2"/>
+    <path d="M-17,1 L-5,14 L19,-13" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <ellipse cx="-12" cy="-22" rx="14" ry="7" fill="#ffffff" opacity="0.35" transform="rotate(-25 -12 -22)"/>
+  </g>
+
+  <!-- Negative badge -->
+  <g transform="translate(396 394)" filter="url(#soft)">
+    <circle r="50" fill="url(#gold)" stroke="#3b2408" stroke-width="3"/>
+    <circle r="40" fill="url(#red)" stroke="#3a0606" stroke-width="2"/>
+    <g fill="#fff3e4">
+      <circle cx="0" cy="-5" r="18"/>
+      <rect x="-11" y="5" width="22" height="15" rx="4"/>
+    </g>
+    <g fill="#7a1010">
+      <ellipse cx="-7" cy="-4" rx="5" ry="6"/>
+      <ellipse cx="7" cy="-4" rx="5" ry="6"/>
+      <path d="M0,4 L-3,9 H3 Z"/>
+    </g>
+    <g stroke="#7a1010" stroke-width="2">
+      <line x1="-4" y1="14" x2="-4" y2="20"/><line x1="0" y1="14" x2="0" y2="20"/><line x1="4" y1="14" x2="4" y2="20"/>
+    </g>
+    <ellipse cx="-12" cy="-22" rx="14" ry="7" fill="#ffffff" opacity="0.3" transform="rotate(-25 -12 -22)"/>
+  </g>
+
+  <!-- Sparkles near the quill tip -->
+  <use href="#sparkle" x="418" y="74" width="26" height="26"/>
+  <use href="#sparkle" x="448" y="120" width="14" height="14"/>
+  <use href="#sparkle" x="392" y="56" width="12" height="12"/>
+  <use href="#sparkle" x="60" y="250" width="14" height="14"/>
+</svg>
