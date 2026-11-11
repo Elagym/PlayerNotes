@@ -4,6 +4,7 @@
 ## Version: 1.3.0
 ## Author: Elagym
 ## X-Website: https://github.com/Elagym/PlayerNotes
+## X-Curse-Project-ID: 1796301
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
 ## SavedVariables: PlayerNotesDB
 
