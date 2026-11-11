@@ -58,6 +58,18 @@ ns.ICONS = {
 	{ id = "shield", label = "Shield", path = ICON_FOLDER .. "INV_Shield_06" },
 	{ id = "bag", label = "Bag", path = ICON_FOLDER .. "INV_Misc_Bag_08" },
 	{ id = "note", label = "Note", path = ICON_FOLDER .. "INV_Misc_Note_01" },
+	{ id = "crown", label = "Crown", path = ICON_FOLDER .. "INV_Crown_01" },
+}
+
+-- A player you marked as outstanding. Not a category you can delete but a mark of its own,
+-- shown first wherever the player's categories are, in legendary orange with a crown. It counts
+-- as positive.
+ns.OUTSTANDING = {
+	id = "@outstanding",
+	label = "Outstanding",
+	color = "ff8000",
+	icon = ICON_FOLDER .. "INV_Crown_01",
+	kind = "positive",
 }
 
 local DEFAULT_CATEGORIES = {
@@ -406,6 +418,9 @@ function ns.KindText(kindId)
 end
 
 function ns.HasKind(entry, kindId)
+	if kindId == "positive" and entry.outstanding then
+		return true
+	end
 	for id in pairs(entry.categories or {}) do
 		local category = ns.GetCategory(id)
 		if category and category.kind == kindId then
@@ -458,9 +473,15 @@ function ns.CategoryOrder()
 	return order
 end
 
--- The categories on these entries, each once, in that order.
+-- The categories on these entries, each once, in that order; the outstanding mark comes first.
 function ns.CategoriesOf(entries)
 	local found = {}
+	for _, entry in ipairs(entries) do
+		if entry.outstanding then
+			found[1] = ns.OUTSTANDING
+			break
+		end
+	end
 	for _, category in ipairs(ns.CategoryOrder()) do
 		for _, entry in ipairs(entries) do
 			if entry.categories and entry.categories[category.id] then
@@ -539,7 +560,43 @@ end
 -- Players ------------------------------------------------------------------------
 
 function ns.HasContent(entry)
-	return (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
+	return entry.outstanding == true or (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
+end
+
+-- Marks a player as outstanding, or takes the mark off. A player who had nothing else is
+-- removed again with it. Returns the entry (nil when removed) and its key, or nil and the reason.
+function ns.SetOutstanding(rawName, on)
+	local entry, key = ns.GetOrCreateEntry(rawName)
+	if not entry then
+		return nil, key
+	end
+	entry.outstanding = on and true or nil
+	entry.updated = time()
+	if not on and not ns.HasContent(entry) then
+		ns.db.players[key] = nil
+		return nil, key
+	end
+	return entry, key
+end
+
+-- Switches the mark, tells you in the chat and refreshes what is on screen. Returns whether the
+-- player is outstanding now, or nil and the reason.
+function ns.ToggleOutstanding(rawName)
+	local key = ns.MakeKey(rawName)
+	local current = key and ns.db.players[key]
+	local on = not (current and current.outstanding)
+	local entry, why = ns.SetOutstanding(rawName, on)
+	if on and not entry then
+		return nil, why
+	end
+	ns.Notify()
+	local who = ns.ColorName(entry and entry.name or ns.DisplayName(rawName), entry and entry.class)
+	if on then
+		ns.Print(("%s is now %s."):format(who, ns.CategoryText(ns.OUTSTANDING)))
+	else
+		ns.Print(("%s is no longer outstanding."):format(who))
+	end
+	return on
 end
 
 -- The entry for a name, created when needed. Returns entry and key, or nil and the reason.
@@ -698,8 +755,8 @@ local function sortValue(mode)
 end
 
 -- Entries for the list: optional filter, search text and sort mode (by name without one).
--- The filter is a category id, or "@negative" / "@positive" / "@neutral" for every player with a
--- category of that kind.
+-- The filter is a category id, "@negative" / "@positive" / "@neutral" for every player with a
+-- category of that kind, or "@outstanding". Outstanding players always come first.
 function ns.SortedEntries(filter, search, mode)
 	local items = {}
 	local valueOf = sortValue(mode)
@@ -707,7 +764,9 @@ function ns.SortedEntries(filter, search, mode)
 	search = search and ns.Trim(search):lower() or ""
 	for key, entry in pairs(ns.db.players) do
 		local keep
-		if kindFilter then
+		if filter == ns.OUTSTANDING.id then
+			keep = entry.outstanding == true
+		elseif kindFilter then
 			keep = ns.HasKind(entry, kindFilter)
 		else
 			keep = not filter or (entry.categories and entry.categories[filter])
@@ -716,10 +775,13 @@ function ns.SortedEntries(filter, search, mode)
 			keep = entry.name:lower():find(search, 1, true) or (entry.note or ""):lower():find(search, 1, true)
 		end
 		if keep then
-			items[#items + 1] = { key = key, entry = entry, value = valueOf(entry) }
+			items[#items + 1] = { key = key, entry = entry, value = valueOf(entry), top = entry.outstanding == true }
 		end
 	end
 	table.sort(items, function(a, b)
+		if a.top ~= b.top then
+			return a.top
+		end
 		if a.value ~= b.value then
 			return a.value < b.value
 		end

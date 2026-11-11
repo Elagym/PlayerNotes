@@ -27,9 +27,13 @@ Nearby.alerts = 0
 Nearby.lastName = nil
 
 local function alertingCategory(entry)
-	-- CategoriesOf puts the alerting ones first.
-	local category = ns.CategoriesOf({ entry })[1]
-	return category and category.alert and category or nil
+	-- CategoriesOf puts the alerting ones first, after the outstanding mark (which never alerts).
+	for _, category in ipairs(ns.CategoriesOf({ entry })) do
+		if category.alert then
+			return category
+		end
+	end
+	return nil
 end
 
 local function showOnScreen(text)

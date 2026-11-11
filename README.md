@@ -12,21 +12,22 @@ Your notes stay on your computer. Nothing is sent to the server or to other play
 
 - **Notes and categories:** write a free-text note on any player and tag them with categories such as *Helpful*, *Skilled*, *Ninja* or *Toxic*.
 - **Positive and negative categories:** every category is positive, negative or neutral, so you can see at a glance whether a player is someone to group with again or someone to avoid. A player who has both kinds shows as *Mixed*.
+- **Outstanding players:** mark the players you never want to forget with a crown. They're always at the top of your list, highlighted in legendary orange, and their mark comes first in every reminder and tooltip.
 - **Reminders in chat:** you get a reminder when you invite someone you have a note on, when they invite you or ask to join, and when they end up in your group. Each reminder starts with **Caution**, **Good** or **Mixed**, then shows the categories and the note.
 - **Group finder icons:** listings whose leader or members you have notes on show your category icons next to the name. Hover the icons to read the notes.
 - **Player tooltips:** hover a player to see your verdict, categories and the start of your note.
 - **Nearby alert:** when a player in an alerting category comes close, you get an on-screen warning and a sound. Only *Griefer* alerts by default; you can turn alerts on for any category.
 - **Online status:** the window shows whether the selected player is online, from your group, friends, guild or a `/who` you start with a click.
 - **Dated notes:** new notes start with the date and the zone you were in, so you know where it happened.
-- **Right-click menus:** right-click a player's portrait, name in chat, or entry in your friend or guild list and choose *Add note* or *Edit note*.
+- **Right-click menus:** right-click a player's portrait, name in chat, or entry in your friend or guild list and choose *Add note* or *Edit note*, or tick *Outstanding*.
 - **Minimap button:** left-click opens the window. Right-click opens the options.
 
 ## The window
 
 Type `/pn` or click the minimap button.
 
-- **Left side:** everyone you have a note on. You can search by name or note text, filter by category (or *All negative* / *All positive*), and sort by name, last change, date added or category. A coloured bar on each row shows the verdict.
-- **Right side:** the selected player's note and categories. Click **New** for a new player, or **Use target** to fill in your target's name. **Add dated line** starts a new line with today's date and zone.
+- **Left side:** everyone you have a note on. You can search by name or note text, filter by category (or *Outstanding*, *All negative* / *All positive*), and sort by name, last change, date added or category. Outstanding players always stay at the top, highlighted in orange. A coloured bar on each row shows the verdict.
+- **Right side:** the selected player's note and categories. Tick **Outstanding** (next to *Categories*) for a player you never want to forget. Click **New** for a new player, or **Use target** to fill in your target's name. **Add dated line** starts a new line with today's date and zone.
 - **Categories:** grouped under *Positive*, *Negative* and *Neutral*. Right-click a category to change its type, pick its icon, switch its nearby alert on or off, or delete it. You can create your own categories below the list, up to 20 in total.
 
 Your changes are saved when you click **Save**, select another player or close the window, so nothing you type is lost.
@@ -56,7 +57,8 @@ You can delete any of them, change their type or icon, and add your own.
 | `/pn cat <player> <category> [category...]` | Switch categories on or off for a player |
 | `/pn show <player>` | Print your note on a player |
 | `/pn del <player>` | Delete your note on a player |
-| `/pn list [category \| negative \| positive]` | List the players you have notes on |
+| `/pn star <player>` | Mark a player as outstanding, or take the mark off (`/pn star target` works too) |
+| `/pn list [category \| negative \| positive \| outstanding]` | List the players you have notes on |
 | `/pn cats` | List the categories |
 | `/pn newcat [+\|-]<name>` | Create a category: `+` for positive, `-` for negative, neither for neutral |
 | `/pn delcat <name>` | Delete a category |

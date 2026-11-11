@@ -30,8 +30,9 @@ local kindHeaders = {}
 local state = {
 	selectedKey = nil, -- the player in the editor; nil while writing a new one
 	draftCategories = {},
+	draftOutstanding = false,
 	dirty = false,
-	filter = nil, -- a category id, or "@negative" / "@positive" for a whole kind
+	filter = nil, -- a category id, "@negative" / "@positive" for a whole kind, or "@outstanding"
 	search = "",
 	newKind = "negative", -- the kind a category made in the window gets
 }
@@ -91,6 +92,12 @@ local function newRow(index)
 	row.selected:SetColorTexture(0.25, 0.5, 0.9, 0.35)
 	row.selected:Hide()
 
+	-- Outstanding players glow in legendary orange, under the selection.
+	row.outstanding = row:CreateTexture(nil, "BACKGROUND", nil, -1)
+	row.outstanding:SetAllPoints()
+	row.outstanding:SetColorTexture(1, 0.5, 0, 0.22)
+	row.outstanding:Hide()
+
 	row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
 
 	-- A thin bar on the left in the colour of the verdict: red, green, or yellow when mixed.
@@ -117,6 +124,9 @@ local function newRow(index)
 end
 
 local function filterLabel()
+	if state.filter == ns.OUTSTANDING.id then
+		return ns.OUTSTANDING.label
+	end
 	local kind = state.filter and ns.GetKind(state.filter:match("^@(.+)$"))
 	if kind then
 		return "All " .. kind.label:lower()
@@ -151,6 +161,7 @@ local function refreshList()
 			row.verdict:Hide()
 		end
 		row.verdictShown = r ~= nil -- for the tests
+		row.outstanding:SetShown(item.entry.outstanding == true)
 		row.selected:SetShown(item.key == state.selectedKey)
 		row:Show()
 	end
@@ -173,6 +184,10 @@ local function openFilterMenu(owner)
 		root:CreateTitle("Show players in")
 		root:CreateButton("All categories", function()
 			state.filter = nil
+			refreshList()
+		end)
+		root:CreateButton(ns.CategoryText(ns.OUTSTANDING), function()
+			state.filter = ns.OUTSTANDING.id
 			refreshList()
 		end)
 		for _, kindId in ipairs({ "negative", "positive" }) do
@@ -317,6 +332,8 @@ local function loadEditor(key)
 		widgets.nameBox:Show()
 		widgets.useTarget:Enable()
 	end
+	state.draftOutstanding = entry ~= nil and entry.outstanding == true
+	widgets.outstandingCheck:SetChecked(state.draftOutstanding)
 	widgets.noteBox:SetText(entry and entry.note or "")
 	widgets.noteBox:SetCursorPosition(0)
 	widgets.noteScroll:SetVerticalScroll(0)
@@ -373,6 +390,7 @@ local function saveDraft()
 		-- A first note on a player who only had categories is new, so it gets the stamp too.
 		entry.note = entry.note == "" and ns.StampNote(noteText) or noteText
 		entry.categories = draftCategoriesCopy()
+		entry.outstanding = state.draftOutstanding or nil
 		entry.updated = time()
 	elseif players[key] then
 		-- A new draft for someone who already has a note: add to it, never replace it.
@@ -380,11 +398,15 @@ local function saveDraft()
 		for id in pairs(draftCategoriesCopy()) do
 			entry.categories[id] = true
 		end
+		if state.draftOutstanding then
+			entry.outstanding = true
+		end
 		merged = true
 	else
 		local entry = ns.GetOrCreateEntry(rawName)
 		entry.note = ns.StampNote(noteText)
 		entry.categories = draftCategoriesCopy()
+		entry.outstanding = state.draftOutstanding or nil
 	end
 
 	loadEditor(key)
@@ -680,6 +702,28 @@ local function buildEditor()
 	local categoriesLabel = newLabel(frame, "Categories")
 	categoriesLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -76)
 
+	-- The outstanding mark, on the same line as "Categories", at the right.
+	local outstandingCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+	outstandingCheck:SetSize(22, 22)
+	outstandingCheck:SetPoint("TOPLEFT", frame, "TOPLEFT", FRAME_WIDTH - 170, -72)
+	outstandingCheck.isOutstanding = true
+	local outstandingLabel = newLabel(outstandingCheck, ns.CategoryText(ns.OUTSTANDING), "GameFontHighlight")
+	outstandingLabel:SetPoint("LEFT", outstandingCheck, "RIGHT", 2, 0)
+	outstandingCheck:SetScript("OnClick", function(self)
+		state.draftOutstanding = self:GetChecked() and true or false
+		markDirty()
+	end)
+	outstandingCheck:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:AddLine(ns.CategoryText(ns.OUTSTANDING))
+		GameTooltip:AddLine("A player you never want to forget: shown first in the list, highlighted, and first in every reminder.", 1, 1, 1, true)
+		GameTooltip:Show()
+	end)
+	outstandingCheck:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+	widgets.outstandingCheck = outstandingCheck
+
 	for i = 1, ns.MAX_CATEGORIES do
 		newCategoryCheck(i)
 	end
@@ -940,6 +984,12 @@ function UI.InstallUnitMenus()
 			root:CreateTitle("PlayerNotes")
 			root:CreateButton(hasNote and "Edit note" or "Add note", function()
 				UI.OpenFor(name)
+			end)
+			root:CreateCheckbox(ns.CategoryText(ns.OUTSTANDING), function()
+				local entry = key and ns.db.players[key]
+				return entry ~= nil and entry.outstanding == true
+			end, function()
+				ns.ToggleOutstanding(name)
 			end)
 		end))
 	end

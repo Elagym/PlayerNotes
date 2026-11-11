@@ -4,13 +4,17 @@ local _, ns = ...
 
 local LIST_LIMIT = 40
 
+-- What /pn list understands for the outstanding players.
+local OUTSTANDING_WORDS = { outstanding = true, star = true, stars = true, starred = true }
+
 local HELP = {
 	"|cffffd060/pn|r  open or close the window",
 	"|cffffd060/pn add|r <player> <text>  add to your note on a player",
 	"|cffffd060/pn cat|r <player> <category> [category...]  switch categories on or off",
 	"|cffffd060/pn show|r <player>  print the note",
 	"|cffffd060/pn del|r <player>  delete the note",
-	"|cffffd060/pn list|r [category | negative | positive]  list the players with a note",
+	"|cffffd060/pn star|r <player>  mark a player as outstanding, or take the mark off",
+	"|cffffd060/pn list|r [category | negative | positive | outstanding]  list the players with a note",
 	"|cffffd060/pn cats|r  list the categories",
 	"|cffffd060/pn newcat|r [+|-]<name>  create a category: + positive, - negative, neither neutral",
 	"|cffffd060/pn delcat|r <name>  delete a category",
@@ -229,6 +233,30 @@ function commands.show(args)
 	end
 end
 
+function commands.star(args)
+	if ns.Trim(args) == "" then
+		ns.Print("Who? /pn star <player>, or /pn star target")
+		return
+	end
+	local name, rest = parseWholePlayer(args)
+	if not name then
+		ns.Print(rest)
+		return
+	end
+	name = resolveExisting(name)
+	if not name then
+		return
+	end
+	local on, why = ns.ToggleOutstanding(name)
+	if on == nil then
+		ns.Print(why)
+		return
+	end
+	if on then
+		afterSave(ns.MakeKey(name))
+	end
+end
+
 function commands.del(args)
 	local name, rest = parseWholePlayer(args)
 	if not name then
@@ -257,9 +285,10 @@ function commands.list(args)
 		-- A category of that name first, so a category called "Bad" still works.
 		local category = matchCategory(args)
 		local kind = not category and ns.FindKind(args)
-		filter = category and category.id or kind and ("@" .. kind.id)
+		local outstanding = not category and not kind and OUTSTANDING_WORDS[ns.Trim(args):lower()]
+		filter = category and category.id or kind and ("@" .. kind.id) or outstanding and ns.OUTSTANDING.id
 		if not filter then
-			ns.Print(("Unknown category: %s. /pn cats lists them; negative and positive work too."):format(ns.Trim(args)))
+			ns.Print(("Unknown category: %s. /pn cats lists them; negative, positive and outstanding work too."):format(ns.Trim(args)))
 			return
 		end
 	end
@@ -442,6 +471,7 @@ commands.remove = commands.del
 commands.category = commands.cat
 commands.categories = commands.cats
 commands.kind = commands.type
+commands.outstanding = commands.star
 
 -- The command -------------------------------------------------------------------------------
 
