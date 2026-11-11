@@ -1,0 +1,27 @@
+# Builds the addon zip and uploads it to CurseForge whenever a version tag
+# is pushed (or a release is created on GitHub, which creates the tag).
+name: Package and release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # lets the packager attach the zip to the GitHub release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+      GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history, for the changelog
+
+      - name: Package and upload
+        uses: BigWigsMods/packager@v2

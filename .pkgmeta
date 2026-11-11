@@ -1,0 +1,7 @@
+package-as: PlayerNotes
+
+ignore:
+  - media
+  - .github
+  - .gitattributes
+  - .pkgmeta

@@ -1,2 +1,6 @@
+media export-ignore
 media/** export-ignore
+.github export-ignore
+.github/** export-ignore
+.pkgmeta export-ignore
 .gitattributes export-ignore
