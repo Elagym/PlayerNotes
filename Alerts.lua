@@ -32,7 +32,7 @@ function ns.Alert(reason, rawName)
 			recentAlerts[result.key] = now
 			local entry = result.entry
 			local who = ns.ColorName(ns.DisplayName(rawName), not result.loose and entry.class or nil)
-			local tags = ns.CategoryTags(entry)
+			local tags = ns.EntryTags(entry)
 			ns.Print(ns.VerdictTag(entry) .. reason:format(who) .. (tags ~= "" and "  " .. tags or ""))
 			if result.loose then
 				DEFAULT_CHAT_FRAME:AddMessage(("   |cff999999Name partly matches your note on %s; this may be a different player.|r"):format(entry.name))

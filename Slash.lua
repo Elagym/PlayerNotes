@@ -14,7 +14,8 @@ local HELP = {
 	"|cffffd060/pn show|r <player>  print the note",
 	"|cffffd060/pn del|r <player>  delete the note",
 	"|cffffd060/pn star|r <player>  mark a player as outstanding, or take the mark off",
-	"|cffffd060/pn list|r [category | negative | positive | outstanding]  list the players with a note",
+	"|cffffd060/pn role|r <player> <tank | healer | dps | none>  set the role a player plays",
+	"|cffffd060/pn list|r [category | negative | positive | outstanding | tank | healer | dps]  list the players with a note",
 	"|cffffd060/pn cats|r  list the categories",
 	"|cffffd060/pn newcat|r [+|-]<name>  create a category: + positive, - negative, neither neutral",
 	"|cffffd060/pn delcat|r <name>  delete a category",
@@ -257,6 +258,35 @@ function commands.star(args)
 	end
 end
 
+-- "/pn role Fetto Vandike healer": the last word is the role, everything before it the player
+-- (your target when there is nothing before it).
+function commands.role(args)
+	local playerText, roleText = ns.Trim(args):match("^(.-)%s*(%S+)$")
+	local role = roleText and ns.FindRole(roleText)
+	if not role then
+		ns.Print("Which role? /pn role <player> <tank | healer | dps | none>")
+		return
+	end
+	local name, rest = parseWholePlayer(playerText)
+	if not name then
+		ns.Print(rest)
+		return
+	end
+	name = resolveExisting(name)
+	if not name then
+		return
+	end
+	local roleId = role ~= "none" and role.id or nil
+	local ok, why = ns.ChangeRole(name, roleId)
+	if not ok then
+		ns.Print(why)
+		return
+	end
+	if roleId then
+		afterSave(ns.MakeKey(name))
+	end
+end
+
 function commands.del(args)
 	local name, rest = parseWholePlayer(args)
 	if not name then
@@ -286,9 +316,12 @@ function commands.list(args)
 		local category = matchCategory(args)
 		local kind = not category and ns.FindKind(args)
 		local outstanding = not category and not kind and OUTSTANDING_WORDS[ns.Trim(args):lower()]
+		local role = not category and not kind and not outstanding and ns.FindRole(args)
+		role = role ~= "none" and role or nil
 		filter = category and category.id or kind and ("@" .. kind.id) or outstanding and ns.OUTSTANDING.id
+			or role and ("@role:" .. role.id)
 		if not filter then
-			ns.Print(("Unknown category: %s. /pn cats lists them; negative, positive and outstanding work too."):format(ns.Trim(args)))
+			ns.Print(("Unknown category: %s. /pn cats lists them; negative, positive, outstanding, tank, healer and dps work too."):format(ns.Trim(args)))
 			return
 		end
 	end
@@ -300,7 +333,7 @@ function commands.list(args)
 	ns.Print(("%d player%s:"):format(#items, #items == 1 and "" or "s"))
 	for i = 1, math.min(#items, LIST_LIMIT) do
 		local entry = items[i].entry
-		local tags = ns.CategoryTags(entry)
+		local tags = ns.EntryTags(entry)
 		DEFAULT_CHAT_FRAME:AddMessage("   " .. ns.VerdictTag(entry) .. ns.ColorName(entry.name, entry.class) .. (tags ~= "" and "  " .. tags or ""))
 	end
 	if #items > LIST_LIMIT then

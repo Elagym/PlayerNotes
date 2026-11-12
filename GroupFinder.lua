@@ -84,7 +84,7 @@ local function showTooltip(icon)
 			GameTooltip:AddLine(" ")
 		end
 		local entry = match.entry
-		local tags = ns.CategoryTags(entry)
+		local tags = ns.EntryTags(entry)
 		GameTooltip:AddLine(ns.VerdictTag(entry) .. ns.ColorName(entry.name, entry.class) .. (tags ~= "" and "  " .. tags or ""), 1, 1, 1)
 		if match.loose then
 			GameTooltip:AddLine(("Name partly matches: this is %s, and may be a different player."):format(ns.DisplayName(match.name)), 0.6, 0.6, 0.6, true)

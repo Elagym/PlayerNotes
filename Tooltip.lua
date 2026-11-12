@@ -31,7 +31,7 @@ end
 
 local function addEntry(tooltip, result)
 	local entry = result.entry
-	local tags = ns.CategoryTags(entry)
+	local tags = ns.EntryTags(entry)
 	tooltip:AddLine(ns.VerdictTag(entry) .. (tags ~= "" and tags or "PlayerNotes"), 0.4, 0.8, 1)
 	if result.loose then
 		tooltip:AddLine(("Name partly matches your note on %s."):format(entry.name), 0.6, 0.6, 0.6, true)

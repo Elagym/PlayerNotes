@@ -72,6 +72,16 @@ ns.OUTSTANDING = {
 	kind = "positive",
 }
 
+-- The role a player plays: tank, healer or DPS. A player without one is "n/a". The icons are the
+-- game's own role icons; `coords` is their place on that texture, in pixels (left, right, top,
+-- bottom of 64).
+local ROLE_TEXTURE = "Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES"
+ns.ROLES = {
+	{ id = "tank", label = "Tank", plural = "Tanks", color = "6fa8ff", coords = { 0, 19, 22, 41 } },
+	{ id = "healer", label = "Healer", plural = "Healers", color = "40ff80", coords = { 20, 39, 1, 20 } },
+	{ id = "dps", label = "DPS", plural = "DPS", color = "ff7060", coords = { 20, 39, 22, 41 } },
+}
+
 local DEFAULT_CATEGORIES = {
 	{ id = "social", label = "Social", color = "4dd08a", icon = ICON_FOLDER .. "INV_Drink_05", kind = "positive" },
 	{ id = "helpful", label = "Helpful", color = "5aa9ff", icon = ICON_FOLDER .. "Spell_Holy_Renew", kind = "positive" },
@@ -511,6 +521,110 @@ function ns.CategoryIcons(entry, size)
 	return table.concat(icons, " ")
 end
 
+-- Roles ------------------------------------------------------------------------------
+
+function ns.GetRole(id)
+	for _, role in ipairs(ns.ROLES) do
+		if role.id == id then
+			return role
+		end
+	end
+	return nil
+end
+
+-- What you can type for a role. "none" (and the like) means n/a: no role.
+local ROLE_WORDS = {
+	tank = "tank", tanks = "tank", t = "tank", prot = "tank",
+	healer = "healer", healers = "healer", heal = "healer", heals = "healer", h = "healer",
+	dps = "dps", damage = "dps", dd = "dps", damager = "dps", d = "dps",
+	none = "none", na = "none", ["n/a"] = "none", ["-"] = "none", clear = "none", off = "none",
+}
+
+-- The role for what you typed, "none" for n/a, or nil when it is not a role word.
+function ns.FindRole(text)
+	local id = ROLE_WORDS[ns.Trim(text or ""):lower()]
+	if id == "none" then
+		return "none"
+	end
+	return ns.GetRole(id)
+end
+
+function ns.RoleIcon(roleId, size)
+	local role = ns.GetRole(roleId)
+	if not role then
+		return ""
+	end
+	size = size or 14
+	local c = role.coords
+	return ("|T%s:%d:%d:0:0:64:64:%d:%d:%d:%d|t"):format(ROLE_TEXTURE, size, size, c[1], c[2], c[3], c[4])
+end
+
+-- The role with its icon and colour, "n/a" in grey without one.
+function ns.RoleLabel(roleId)
+	local role = ns.GetRole(roleId)
+	if not role then
+		return "|cff999999n/a|r"
+	end
+	return ns.RoleIcon(role.id) .. " |cff" .. role.color .. role.label .. "|r"
+end
+
+-- The player's role, or "" when they have none.
+function ns.RoleText(entry)
+	return ns.GetRole(entry.role) and ns.RoleLabel(entry.role) or ""
+end
+
+-- What is shown after a player's name: their role, then their categories.
+function ns.EntryTags(entry)
+	local role, tags = ns.RoleText(entry), ns.CategoryTags(entry)
+	if role ~= "" and tags ~= "" then
+		return role .. "  " .. tags
+	end
+	return role .. tags
+end
+
+-- The same as icons only, for the list.
+function ns.EntryIcons(entry, size)
+	local role, icons = ns.RoleIcon(entry.role, size), ns.CategoryIcons(entry, size)
+	if role ~= "" and icons ~= "" then
+		return role .. " " .. icons
+	end
+	return role .. icons
+end
+
+-- Gives a player a role, or takes it away with nil or "none". A player who had nothing else is
+-- removed again. Returns the entry (nil when removed) and its key, or nil and the reason.
+function ns.SetRole(rawName, roleId)
+	local entry, key = ns.GetOrCreateEntry(rawName)
+	if not entry then
+		return nil, key
+	end
+	entry.role = ns.GetRole(roleId) and roleId or nil
+	entry.updated = time()
+	if not ns.HasContent(entry) then
+		ns.db.players[key] = nil
+		return nil, key
+	end
+	return entry, key
+end
+
+-- Sets the role, tells you in the chat and refreshes what is on screen. Returns true, or nil and
+-- the reason.
+function ns.ChangeRole(rawName, roleId)
+	local display = ns.ValidateName(rawName)
+	local entry, why = ns.SetRole(rawName, roleId)
+	if not entry and not display then
+		return nil, why
+	end
+	ns.Notify()
+	local who = ns.ColorName(entry and entry.name or display, entry and entry.class)
+	if ns.GetRole(roleId) then
+		ns.Print(("%s plays %s."):format(who, ns.RoleLabel(roleId)))
+	else
+		ns.Print(("%s has no role any more (n/a)."):format(who))
+	end
+	return true
+end
+
 -- `kindId` is "positive", "negative" or "neutral" (the default).
 function ns.AddCategory(label, kindId)
 	label = ns.Trim(label or "")
@@ -560,7 +674,7 @@ end
 -- Players ------------------------------------------------------------------------
 
 function ns.HasContent(entry)
-	return entry.outstanding == true or (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
+	return entry.outstanding == true or ns.GetRole(entry.role) ~= nil or (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
 end
 
 -- Marks a player as outstanding, or takes the mark off. A player who had nothing else is
@@ -756,16 +870,20 @@ end
 
 -- Entries for the list: optional filter, search text and sort mode (by name without one).
 -- The filter is a category id, "@negative" / "@positive" / "@neutral" for every player with a
--- category of that kind, or "@outstanding". Outstanding players always come first.
+-- category of that kind, "@outstanding", or "@role:tank" (healer, dps) for a role. Outstanding
+-- players always come first.
 function ns.SortedEntries(filter, search, mode)
 	local items = {}
 	local valueOf = sortValue(mode)
-	local kindFilter = filter and filter:match("^@(.+)$")
+	local roleFilter = filter and filter:match("^@role:(.+)$")
+	local kindFilter = not roleFilter and filter and filter:match("^@(.+)$")
 	search = search and ns.Trim(search):lower() or ""
 	for key, entry in pairs(ns.db.players) do
 		local keep
 		if filter == ns.OUTSTANDING.id then
 			keep = entry.outstanding == true
+		elseif roleFilter then
+			keep = entry.role == roleFilter
 		elseif kindFilter then
 			keep = ns.HasKind(entry, kindFilter)
 		else
@@ -847,9 +965,9 @@ function ns.PrintNoteLines(entry, brief)
 	end
 end
 
--- "<Name>  <categories>" then the note.
+-- "<Name>  <role>  <categories>" then the note.
 function ns.PrintEntry(entry)
-	local tags = ns.CategoryTags(entry)
+	local tags = ns.EntryTags(entry)
 	ns.Print(ns.VerdictTag(entry) .. ns.ColorName(entry.name, entry.class) .. (tags ~= "" and "  " .. tags or ""))
 	ns.PrintNoteLines(entry)
 end
