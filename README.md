@@ -16,6 +16,7 @@ Your notes stay on your computer. Nothing is sent to the server or to other play
 - **Roles:** note whether a player plays *Tank*, *Healer* or *DPS* (or leave it at *n/a*). The role icon shows next to their name in the list, in reminders and in tooltips, and you can list all your tanks or healers when you need one.
 - **Reminders in chat:** you get a reminder when you invite someone you have a note on, when they invite you or ask to join, and when they end up in your group. Each reminder starts with **Caution**, **Good** or **Mixed**, then shows the categories and the note.
 - **Group finder icons:** listings whose leader or members you have notes on show your category icons next to the name. Hover the icons to read the notes.
+- **LFG Forever support:** if you use the *LFG Forever* addon, its player list shows the same icons and notes. Without it, nothing changes.
 - **Player tooltips:** hover a player to see your verdict, categories and the start of your note.
 - **Nearby alert:** when a player in an alerting category comes close, you get an on-screen warning and a sound. Only *Griefer* alerts by default; you can turn alerts on for any category.
 - **Online status:** the window shows whether the selected player is online, from your group, friends, guild or a `/who` you start with a click.
@@ -86,6 +87,7 @@ Your notes are saved per account, so all your characters share them.
 - **`/who` cannot see the other faction.** If the online check finds nobody, the player may still be online.
 - **The nearby alert depends on nameplates.** It notices players whose nameplate, mouseover or target you can see. Turn on enemy and friendly player nameplates for the best results.
 - **Each alert has a cooldown.** A reminder for the same player appears at most once every 2 minutes, and a nearby alert at most once every 5 minutes.
+- **LFG Forever is optional.** PlayerNotes adds its icons to LFG Forever's list from the outside, without changing LFG Forever. If a future LFG Forever update changes its list, the icons stop appearing there, and everything else keeps working; `/pn debug` shows whether the link is active.
 - **A name can match loosely.** If the game shows only a first name, PlayerNotes can match it to a note on a player with that first name. It then tells you the match may be a different player.
 
 ## Reporting a problem

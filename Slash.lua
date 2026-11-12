@@ -490,6 +490,9 @@ function commands.debug()
 		#hookedNames > 0 and table.concat(hookedNames, ", ") or "NOTHING",
 		LFGBrowseFrame and "yes" or "no", LFGListFrame and "yes" or "no",
 		finder.rowsSeen, finder.iconsShown, tostring(finder.lastName or "-")))
+	local lfgForever = ns.LFGForever
+	say(("LFG Forever: %s; %d rows seen%s"):format(lfgForever.state, lfgForever.rowsSeen,
+		lfgForever.problem and (" (" .. lfgForever.problem .. ")") or ""))
 	say("player tooltip: " .. tostring(ns.Tooltip.method or "NOT INSTALLED"))
 	local nearby = ns.Nearby
 	say(("nearby: %s; %d players read, %d names hidden, %d alerts, last name: %s"):format(ns.db.settings.nearbyAlert and "on" or "off",

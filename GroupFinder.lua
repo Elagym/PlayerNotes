@@ -196,6 +196,9 @@ local function updateRow(row)
 	GroupFinder.iconsShown = GroupFinder.iconsShown + 1
 end
 
+-- For rows drawn by other addons on the same row template (LFGForever.lua).
+GroupFinder.UpdateRow = updateRow
+
 -- Your notes changed: the rows on screen follow straight away.
 function GroupFinder.Refresh()
 	for row in pairs(knownRows) do
