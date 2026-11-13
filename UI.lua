@@ -760,14 +760,6 @@ local function newCategoryCheck(index)
 		state.draftCategories[id] = self:GetChecked() and true or nil
 		markDirty()
 	end)
-	check:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:AddLine("Right-click: type, icon, nearby alert, delete", 0.8, 0.8, 0.8)
-		GameTooltip:Show()
-	end)
-	check:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
 	categoryChecks[index] = check
 end
 
