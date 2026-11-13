@@ -31,9 +31,9 @@ Type `/pn` or click the minimap button.
 
 - **Left side:** everyone you have a note on. You can search by name or note text, filter by category (or *Outstanding*, *All negative* / *All positive*, *Tanks*, *Healers*, *DPS*), and sort by name, last change, date added or category. Outstanding players always stay at the top, highlighted in orange. A coloured bar on each row shows the verdict.
 - **Right side:** the selected player's note and categories. Under the name, tick the roles they play (**Tank**, **Healer**, **DPS**); leave all three empty for n/a. Tick **Outstanding** (next to *Categories*) for a player you never want to forget. Click **New** for a new player, or **Use target** to fill in your target's name. **Add dated line** starts a new line with today's date and zone.
-- **Categories:** grouped under *Positive*, *Negative* and *Neutral*. Right-click a category to change its type, pick its icon, switch its nearby alert on or off, or delete it. You can create your own categories below the list, up to 20 in total: type a name, pick *Positive*, *Negative* or *Neutral* with the radio buttons under it, and click **Add**.
+- **Categories:** grouped under *Positive*, *Negative* and *Neutral*. Right-click a category (its box, icon or name) to change its type, pick its icon, switch its nearby alert on or off, or delete it. You can create your own categories below the list, up to 20 in total: type a name, pick *Positive*, *Negative* or *Neutral* with the radio buttons under it, and click **Add**.
 
-Your changes are saved when you click **Save**, select another player or close the window, so nothing you type is lost.
+Everything saves by itself, so there is no Save button: a tick at once, your typing a moment after you pause, and a new player as soon as their name is typed and there is something to keep. Your changes are also saved when you select another player, close the window, log out or reload, so nothing is lost. The line at the bottom of the window says when it last saved, or what a new player still needs. A note started on an empty page gets its date and zone once you click out of it.
 
 ## Default categories
 

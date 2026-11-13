@@ -2,24 +2,26 @@
 -- on the right the note and categories of the selected player. Nothing here is protected, so
 -- the window opens and closes normally in combat.
 --
--- Edits are held in a draft until Save. So that nothing typed is ever lost, the draft is also
--- saved when you select another player or close the window.
+-- Every change saves itself: a tick at once, typing a moment after you pause, a new player once
+-- their name is typed in full. The draft is also saved when you select another player, close
+-- the window, log out or reload, so there is no Save button.
 
 local _, ns = ...
 
 local UI = {}
 ns.UI = UI
 
-local FRAME_WIDTH, FRAME_HEIGHT = 700, 604
+local FRAME_WIDTH, FRAME_HEIGHT = 700, 622
 local LIST_WIDTH = 224
 local ROW_HEIGHT = 20
 local PANE_LEFT = LIST_WIDTH + 58
 local PANE_WIDTH = FRAME_WIDTH - PANE_LEFT - 18
 local GRID_COLUMNS = 3
 local GRID_ROW_HEIGHT = 23
-local GRID_TOP = -118
+local GRID_TOP = -136
 local KIND_HEADER_HEIGHT = 16
 local NOTE_MAX_LETTERS = 2000
+local TYPING_PAUSE = 1 -- seconds without typing before the note saves itself
 
 local frame
 local widgets = {}
@@ -33,6 +35,7 @@ local state = {
 	draftOutstanding = false,
 	draftRoles = {}, -- { tank = true, dps = true }; empty for n/a
 	dirty = false,
+	stampPending = false, -- a note started on an empty page gets the date once you are done with it
 	filter = nil, -- a category id, "@negative" / "@positive" for a whole kind, "@outstanding" or "@role:<id>"
 	search = "",
 	newKind = "negative", -- the kind a category made in the window gets
@@ -359,6 +362,7 @@ local function loadEditor(key)
 	widgets.noteBox:SetCursorPosition(0)
 	widgets.noteScroll:SetVerticalScroll(0)
 	state.dirty = false
+	state.stampPending = not entry or (entry.note or "") == ""
 	refreshCategories()
 	if entry then
 		widgets.deleteButton:Enable()
@@ -370,9 +374,17 @@ local function loadEditor(key)
 	UI.RefreshOnline(false)
 end
 
-local function markDirty()
+local scheduleAutosave -- below, once saving is defined
+
+-- Something in the editor changed; it saves itself after `delay` seconds (0: right away).
+local function markDirty(delay)
 	state.dirty = true
 	setStatus("|cffffd060Not saved yet|r")
+	if not delay and widgets.nameBox:HasFocus() then
+		-- A tick or a button means the name is typed: leaving the box lets a new player save.
+		widgets.nameBox:ClearFocus()
+	end
+	scheduleAutosave(delay or 0)
 end
 
 -- The draft's categories, without any that were deleted in the meantime.
@@ -386,9 +398,32 @@ local function draftCategoriesCopy()
 	return copy
 end
 
+-- The date and zone in front of a note that was started on an empty page. It is added once you
+-- are done with the note rather than while you type, so the text never jumps under the cursor.
+-- Returns true when the saved note changed.
+local function finishStamp()
+	local entry = state.stampPending and state.selectedKey and ns.db.players[state.selectedKey]
+	if not entry or (entry.note or "") == "" then
+		return false
+	end
+	state.stampPending = false
+	local stamped = ns.StampNote(entry.note)
+	if stamped == entry.note then
+		return false
+	end
+	entry.note = stamped
+	return true
+end
+
+-- Something worth keeping in the draft: without it a new player is not saved.
+local function draftHasContent()
+	return ns.Trim(widgets.noteBox:GetText() or "") ~= "" or next(draftCategoriesCopy()) ~= nil
+		or state.draftOutstanding or next(state.draftRoles) ~= nil
+end
+
 -- Writes the draft to the saved data. Returns false and the reason, also shown in the window,
--- when it cannot.
-local function saveDraft()
+-- when it cannot. With `quiet` (saving by itself while you work) the editor is left as it is.
+local function saveDraft(quiet)
 	local players = ns.db.players
 	if state.selectedKey and not players[state.selectedKey] then
 		local why = "That player has no note any more."
@@ -408,8 +443,7 @@ local function saveDraft()
 	if state.selectedKey then
 		local entry = players[state.selectedKey]
 		key = state.selectedKey
-		-- A first note on a player who only had categories is new, so it gets the stamp too.
-		entry.note = entry.note == "" and ns.StampNote(noteText) or noteText
+		entry.note = noteText
 		entry.categories = draftCategoriesCopy()
 		entry.outstanding = state.draftOutstanding or nil
 		entry.roles = ns.CleanRoles(state.draftRoles)
@@ -429,14 +463,37 @@ local function saveDraft()
 		end
 		entry.roles = ns.CleanRoles(state.draftRoles)
 		merged = true
+		-- AddNote dated the new piece; the old note must not get a stamp in front.
+		state.stampPending = false
 	else
 		local entry = ns.GetOrCreateEntry(rawName)
-		entry.note = ns.StampNote(noteText)
+		entry.note = noteText
 		entry.categories = draftCategoriesCopy()
 		entry.outstanding = state.draftOutstanding or nil
 		entry.roles = ns.CleanRoles(state.draftRoles)
 	end
+	state.dirty = false
 
+	if quiet and not merged then
+		-- Saved while you work: only a new player's name becomes fixed, as for a saved player.
+		local entry = players[key]
+		if state.selectedKey ~= key then
+			state.selectedKey = key
+			widgets.nameText:SetText(ns.ColorName(entry.name, entry.class))
+			widgets.nameBox:ClearFocus()
+			widgets.nameBox:Hide()
+			widgets.nameText:Show()
+			widgets.useTarget:Disable()
+			widgets.deleteButton:Enable()
+		end
+		refreshList()
+		ns.GroupFinder.Refresh()
+		setStatus("|cff80ff80Saved automatically|r " .. date("%H:%M"))
+		return true
+	end
+
+	state.selectedKey = key
+	finishStamp()
 	loadEditor(key)
 	refreshList()
 	ns.GroupFinder.Refresh()
@@ -448,6 +505,7 @@ end
 -- simply stays in the editor; otherwise it is dropped, and you are told what it said.
 local function saveIfDirty(keepDraft)
 	if not state.dirty then
+		finishStamp()
 		return
 	end
 	local saved, why = saveDraft()
@@ -459,6 +517,45 @@ local function saveIfDirty(keepDraft)
 		end
 		state.dirty = false
 	end
+end
+
+-- Saving by itself. A new player waits until their name is typed in full (the name box left)
+-- and the draft holds something; until then the status keeps saying "Not saved yet".
+local autosaveToken = nil
+
+local function autosave()
+	autosaveToken = nil
+	if not (frame and state.dirty) then
+		return
+	end
+	if state.selectedKey and not ns.db.players[state.selectedKey] then
+		return
+	end
+	if not state.selectedKey then
+		if widgets.nameBox:HasFocus() then
+			return
+		end
+		-- With no Save button, the status says what the draft still needs.
+		if not ns.ValidateName(widgets.nameBox:GetText()) then
+			setStatus("|cffffd060Not saved yet:|r type the player's name (First Surname).")
+			return
+		end
+		if not draftHasContent() then
+			setStatus("|cffffd060Not saved yet:|r write a note or tick something to keep this player.")
+			return
+		end
+	end
+	saveDraft(true)
+end
+
+scheduleAutosave = function(delay)
+	local token = {}
+	autosaveToken = token
+	C_Timer.After(delay, ns.Guard("autosave", function()
+		if autosaveToken == token then
+			autosave()
+		end
+	end))
 end
 
 selectEntry = function(key)
@@ -507,7 +604,7 @@ local function addDatedLine()
 	noteBox:SetText(text .. ns.Stamp() .. ": ")
 	noteBox:SetFocus()
 	noteBox:SetCursorPosition(NOTE_MAX_LETTERS * 4) -- past the end; the box stops at the end
-	markDirty()
+	markDirty(TYPING_PAUSE)
 end
 
 -- Dialogs -----------------------------------------------------------------------------
@@ -645,6 +742,9 @@ local function newCategoryCheck(index)
 	check.label:SetPoint("LEFT", check, "RIGHT", 2, 0)
 	check.label:SetWidth(math.floor(PANE_WIDTH / GRID_COLUMNS) - 28)
 	check.label:SetWordWrap(false)
+	-- The icon and name are part of the box: a click on them ticks it, a right click opens the
+	-- category's menu. The area stops short of the next column.
+	check:SetHitRectInsets(0, -(math.floor(PANE_WIDTH / GRID_COLUMNS) - 26), 0, 0)
 
 	check:SetScript("OnClick", function(self, mouseButton)
 		local id = self.categoryId
@@ -701,7 +801,13 @@ local function buildEditor()
 	nameBox:SetScript("OnEnterPressed", function() widgets.noteBox:SetFocus() end)
 	nameBox:SetScript("OnTextChanged", function(_, userInput)
 		if userInput then
-			markDirty()
+			markDirty(TYPING_PAUSE)
+		end
+	end)
+	-- The name is typed in full: a new player with something in the draft saves now.
+	nameBox:SetScript("OnEditFocusLost", function()
+		if state.dirty then
+			scheduleAutosave(0)
 		end
 	end)
 	widgets.nameBox = nameBox
@@ -756,6 +862,9 @@ local function buildEditor()
 
 	local categoriesLabel = newLabel(frame, "Categories")
 	categoriesLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -98)
+	local categoriesHint = newLabel(frame, "Right-click a category's name or icon to edit or delete it.", "GameFontDisableSmall")
+	categoriesHint:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -118)
+	widgets.categoriesHint = categoriesHint
 
 	-- The outstanding mark, on the same line as "Categories", at the right.
 	local outstandingCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
@@ -855,9 +964,19 @@ local function buildEditor()
 	noteBox:SetScript("OnEscapePressed", noteBox.ClearFocus)
 	noteBox:SetScript("OnTextChanged", function(_, userInput)
 		if userInput then
-			markDirty()
+			markDirty(TYPING_PAUSE)
 		end
 	end)
+	-- Done typing: save now, and date a note that was started on an empty page.
+	noteBox:SetScript("OnEditFocusLost", ns.Guard("note saved", function(self)
+		if state.dirty then
+			autosave()
+		end
+		if not state.dirty and finishStamp() then
+			local entry = ns.db.players[state.selectedKey]
+			self:SetText(entry.note)
+		end
+	end))
 	-- Keeps the cursor in view while typing past the bottom of the box.
 	noteBox:SetScript("OnCursorChanged", function(_, _, y, _, cursorHeight)
 		local top = -y
@@ -879,15 +998,9 @@ local function buildEditor()
 	notePanel:EnableMouse(true)
 	notePanel:SetScript("OnMouseDown", function() noteBox:SetFocus() end)
 
-	local saveButton = newButton(frame, "Save", 90)
-	saveButton:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PANE_LEFT, 32)
-	saveButton:SetScript("OnClick", function()
-		noteBox:ClearFocus()
-		saveDraft()
-	end)
-
+	-- No Save button: everything saves by itself.
 	local deleteButton = newButton(frame, "Delete", 90)
-	deleteButton:SetPoint("LEFT", saveButton, "RIGHT", 6, 0)
+	deleteButton:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PANE_LEFT, 32)
 	deleteButton:SetScript("OnClick", function()
 		local key = state.selectedKey
 		local entry = key and ns.db.players[key]
@@ -1019,6 +1132,16 @@ function UI.OnClassesChanged()
 		widgets.nameText:SetText(ns.ColorName(entry.name, entry.class))
 	end
 end
+
+-- Logging out or reloading does not close the window first, so the draft is saved here: the
+-- game writes the saved data right after this event.
+local logoutWatcher = CreateFrame("Frame")
+logoutWatcher:RegisterEvent("PLAYER_LOGOUT")
+logoutWatcher:SetScript("OnEvent", ns.Guard("save at logout", function()
+	if frame and ns.db then
+		saveIfDirty(true)
+	end
+end))
 
 -- Right-click menus on players -------------------------------------------------------------
 
