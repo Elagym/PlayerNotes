@@ -330,6 +330,16 @@ function ns.InitDB()
 			category.alert = default and default.alert or false
 		end
 	end
+	-- Up to 1.6 a player had one role (`role = "tank"`); now a set of them.
+	for _, entry in pairs(db.players) do
+		if type(entry) == "table" and entry.role ~= nil then
+			if ns.GetRole(entry.role) then
+				entry.roles = entry.roles or {}
+				entry.roles[entry.role] = true
+			end
+			entry.role = nil
+		end
+	end
 	if type(db.settings) ~= "table" then
 		db.settings = {}
 	end
@@ -568,12 +578,65 @@ function ns.RoleLabel(roleId)
 	return ns.RoleIcon(role.id) .. " |cff" .. role.color .. role.label .. "|r"
 end
 
--- The player's role, or "" when they have none.
-function ns.RoleText(entry)
-	return ns.GetRole(entry.role) and ns.RoleLabel(entry.role) or ""
+-- A player can play several roles. They are saved as a set, `entry.roles = { tank = true, dps = true }`,
+-- and a player without any is n/a (no `roles` at all).
+
+-- Only real roles, nil when there are none: what gets saved.
+function ns.CleanRoles(set)
+	local clean = nil
+	for _, role in ipairs(ns.ROLES) do
+		if type(set) == "table" and set[role.id] then
+			clean = clean or {}
+			clean[role.id] = true
+		end
+	end
+	return clean
 end
 
--- What is shown after a player's name: their role, then their categories.
+-- The ids of the player's roles in the usual order (tank, healer, dps); empty for n/a.
+function ns.RolesOf(entry)
+	local list = {}
+	local roles = type(entry.roles) == "table" and entry.roles or {}
+	for _, role in ipairs(ns.ROLES) do
+		if roles[role.id] then
+			list[#list + 1] = role.id
+		end
+	end
+	return list
+end
+
+function ns.HasRole(entry, roleId)
+	return type(entry.roles) == "table" and entry.roles[roleId] == true
+end
+
+-- Roles with icon and colour, "Tank, DPS"; "n/a" in grey for none.
+function ns.RolesLabel(list)
+	if #list == 0 then
+		return ns.RoleLabel(nil)
+	end
+	local labels = {}
+	for i, roleId in ipairs(list) do
+		labels[i] = ns.RoleLabel(roleId)
+	end
+	return table.concat(labels, ", ")
+end
+
+-- The player's roles, or "" when they have none.
+function ns.RoleText(entry)
+	local list = ns.RolesOf(entry)
+	return #list > 0 and ns.RolesLabel(list) or ""
+end
+
+-- The role icons only.
+function ns.RoleIcons(entry, size)
+	local icons = {}
+	for i, roleId in ipairs(ns.RolesOf(entry)) do
+		icons[i] = ns.RoleIcon(roleId, size)
+	end
+	return table.concat(icons, " ")
+end
+
+-- What is shown after a player's name: their roles, then their categories.
 function ns.EntryTags(entry)
 	local role, tags = ns.RoleText(entry), ns.CategoryTags(entry)
 	if role ~= "" and tags ~= "" then
@@ -584,21 +647,21 @@ end
 
 -- The same as icons only, for the list.
 function ns.EntryIcons(entry, size)
-	local role, icons = ns.RoleIcon(entry.role, size), ns.CategoryIcons(entry, size)
+	local role, icons = ns.RoleIcons(entry, size), ns.CategoryIcons(entry, size)
 	if role ~= "" and icons ~= "" then
 		return role .. " " .. icons
 	end
 	return role .. icons
 end
 
--- Gives a player a role, or takes it away with nil or "none". A player who had nothing else is
+-- Sets exactly these roles (a set of ids; nil or empty for n/a). A player who had nothing else is
 -- removed again. Returns the entry (nil when removed) and its key, or nil and the reason.
-function ns.SetRole(rawName, roleId)
+function ns.SetRoles(rawName, set)
 	local entry, key = ns.GetOrCreateEntry(rawName)
 	if not entry then
 		return nil, key
 	end
-	entry.role = ns.GetRole(roleId) and roleId or nil
+	entry.roles = ns.CleanRoles(set)
 	entry.updated = time()
 	if not ns.HasContent(entry) then
 		ns.db.players[key] = nil
@@ -607,24 +670,53 @@ function ns.SetRole(rawName, roleId)
 	return entry, key
 end
 
--- Sets the role, tells you in the chat and refreshes what is on screen. Returns true, or nil and
+-- Sets the roles, tells you in the chat and refreshes what is on screen. Returns true, or nil and
 -- the reason.
-function ns.ChangeRole(rawName, roleId)
+function ns.ChangeRoles(rawName, set)
 	local display = ns.ValidateName(rawName)
-	local entry, why = ns.SetRole(rawName, roleId)
+	local entry, why = ns.SetRoles(rawName, set)
 	if not entry and not display then
 		return nil, why
 	end
 	ns.Notify()
 	local who = ns.ColorName(entry and entry.name or display, entry and entry.class)
-	if ns.GetRole(roleId) then
-		ns.Print(("%s plays %s."):format(who, ns.RoleLabel(roleId)))
+	local list = entry and ns.RolesOf(entry) or {}
+	if #list > 0 then
+		ns.Print(("%s plays %s."):format(who, ns.RolesLabel(list)))
 	else
 		ns.Print(("%s has no role any more (n/a)."):format(who))
 	end
 	return true
 end
 
+-- Switches one role on or off, keeping the others.
+function ns.ToggleRole(rawName, roleId)
+	local key = ns.MakeKey(rawName)
+	local current = key and ns.db.players[key]
+	local set = {}
+	for _, id in ipairs(current and ns.RolesOf(current) or {}) do
+		set[id] = true
+	end
+	set[roleId] = not set[roleId] or nil
+	return ns.ChangeRoles(rawName, set)
+end
+
+-- What you type for roles: one word, several joined with commas ("tank,dps"), or "none". Returns
+-- a set (empty for none), or nil when a word is not a role.
+function ns.ParseRoles(text)
+	local set, any = {}, false
+	for word in (text or ""):gmatch("[^,%+/]+") do
+		local role = ns.FindRole(word)
+		if not role then
+			return nil
+		end
+		any = true
+		if role ~= "none" then
+			set[role.id] = true
+		end
+	end
+	return any and set or nil
+end
 -- `kindId` is "positive", "negative" or "neutral" (the default).
 function ns.AddCategory(label, kindId)
 	label = ns.Trim(label or "")
@@ -674,7 +766,7 @@ end
 -- Players ------------------------------------------------------------------------
 
 function ns.HasContent(entry)
-	return entry.outstanding == true or ns.GetRole(entry.role) ~= nil or (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
+	return entry.outstanding == true or #ns.RolesOf(entry) > 0 or (entry.note and entry.note ~= "") or (entry.categories and next(entry.categories) ~= nil)
 end
 
 -- Marks a player as outstanding, or takes the mark off. A player who had nothing else is
@@ -887,7 +979,7 @@ function ns.SortedEntries(filter, search, mode)
 		if filter == ns.OUTSTANDING.id then
 			keep = entry.outstanding == true
 		elseif roleFilter then
-			keep = entry.role == roleFilter
+			keep = ns.HasRole(entry, roleFilter)
 		elseif kindFilter then
 			keep = ns.HasKind(entry, kindFilter)
 		else

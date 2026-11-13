@@ -10,14 +10,14 @@ local _, ns = ...
 local UI = {}
 ns.UI = UI
 
-local FRAME_WIDTH, FRAME_HEIGHT = 700, 582
+local FRAME_WIDTH, FRAME_HEIGHT = 700, 604
 local LIST_WIDTH = 224
 local ROW_HEIGHT = 20
 local PANE_LEFT = LIST_WIDTH + 58
 local PANE_WIDTH = FRAME_WIDTH - PANE_LEFT - 18
 local GRID_COLUMNS = 3
 local GRID_ROW_HEIGHT = 23
-local GRID_TOP = -96
+local GRID_TOP = -118
 local KIND_HEADER_HEIGHT = 16
 local NOTE_MAX_LETTERS = 2000
 
@@ -31,7 +31,7 @@ local state = {
 	selectedKey = nil, -- the player in the editor; nil while writing a new one
 	draftCategories = {},
 	draftOutstanding = false,
-	draftRole = nil, -- "tank", "healer", "dps", or nil for n/a
+	draftRoles = {}, -- { tank = true, dps = true }; empty for n/a
 	dirty = false,
 	filter = nil, -- a category id, "@negative" / "@positive" for a whole kind, "@outstanding" or "@role:<id>"
 	search = "",
@@ -348,8 +348,13 @@ local function loadEditor(key)
 	end
 	state.draftOutstanding = entry ~= nil and entry.outstanding == true
 	widgets.outstandingCheck:SetChecked(state.draftOutstanding)
-	state.draftRole = entry and ns.GetRole(entry.role) and entry.role or nil
-	widgets.roleButton:SetText("Role: " .. ns.RoleLabel(state.draftRole))
+	wipe(state.draftRoles)
+	for _, roleId in ipairs(entry and ns.RolesOf(entry) or {}) do
+		state.draftRoles[roleId] = true
+	end
+	for _, check in ipairs(widgets.roleChecks) do
+		check:SetChecked(state.draftRoles[check.roleId] == true)
+	end
 	widgets.noteBox:SetText(entry and entry.note or "")
 	widgets.noteBox:SetCursorPosition(0)
 	widgets.noteScroll:SetVerticalScroll(0)
@@ -407,7 +412,7 @@ local function saveDraft()
 		entry.note = entry.note == "" and ns.StampNote(noteText) or noteText
 		entry.categories = draftCategoriesCopy()
 		entry.outstanding = state.draftOutstanding or nil
-		entry.role = state.draftRole
+		entry.roles = ns.CleanRoles(state.draftRoles)
 		entry.updated = time()
 	elseif players[key] then
 		-- A new draft for someone who already has a note: add to it, never replace it.
@@ -418,16 +423,18 @@ local function saveDraft()
 		if state.draftOutstanding then
 			entry.outstanding = true
 		end
-		if state.draftRole then
-			entry.role = state.draftRole
+		-- Roles ticked in the draft are added to the ones the player already had.
+		for _, roleId in ipairs(ns.RolesOf(entry)) do
+			state.draftRoles[roleId] = true
 		end
+		entry.roles = ns.CleanRoles(state.draftRoles)
 		merged = true
 	else
 		local entry = ns.GetOrCreateEntry(rawName)
 		entry.note = ns.StampNote(noteText)
 		entry.categories = draftCategoriesCopy()
 		entry.outstanding = state.draftOutstanding or nil
-		entry.role = state.draftRole
+		entry.roles = ns.CleanRoles(state.draftRoles)
 	end
 
 	loadEditor(key)
@@ -720,33 +727,40 @@ local function buildEditor()
 		end
 	end)
 
-	local categoriesLabel = newLabel(frame, "Categories")
-	categoriesLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -76)
-
-	-- The player's role, between "Categories" and the outstanding mark; a click opens the choices.
-	local roleButton = newButton(frame, "Role: " .. ns.RoleLabel(nil), 124)
-	roleButton:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT + 104, -71)
-	roleButton:SetScript("OnClick", function(self)
-		MenuUtil.CreateContextMenu(self, function(_, root)
-			root:CreateTitle("Role")
-			local function choose(roleId)
-				state.draftRole = roleId
-				self:SetText("Role: " .. ns.RoleLabel(roleId))
-				markDirty()
-			end
-			for _, role in ipairs(ns.ROLES) do
-				local id = role.id
-				root:CreateRadio(ns.RoleLabel(id), function() return state.draftRole == id end, function() choose(id) end)
-			end
-			root:CreateRadio(ns.RoleLabel(nil), function() return state.draftRole == nil end, function() choose(nil) end)
+	-- The roles the player plays, under the name: tick any of them; none ticked is n/a.
+	local roleLabel = newLabel(frame, "Role")
+	roleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -66)
+	widgets.roleChecks = {}
+	local previous = nil
+	for _, role in ipairs(ns.ROLES) do
+		local check = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+		check:SetSize(22, 22)
+		if previous then
+			check:SetPoint("LEFT", previous.label, "RIGHT", 14, 0)
+		else
+			-- Right under the name box, lined up with it.
+			check:SetPoint("TOPLEFT", nameBox, "BOTTOMLEFT", -6, -1)
+		end
+		check.roleId = role.id
+		check.label = newLabel(check, ns.RoleLabel(role.id), "GameFontHighlightSmall")
+		check.label:SetPoint("LEFT", check, "RIGHT", 1, 0)
+		-- The word is part of the box: clicking it ticks the box too.
+		check:SetHitRectInsets(0, -((check.label:GetStringWidth() or 50) + 1), 0, 0)
+		check:SetScript("OnClick", function(self)
+			state.draftRoles[self.roleId] = self:GetChecked() and true or nil
+			markDirty()
 		end)
-	end)
-	widgets.roleButton = roleButton
+		widgets.roleChecks[#widgets.roleChecks + 1] = check
+		previous = check
+	end
+
+	local categoriesLabel = newLabel(frame, "Categories")
+	categoriesLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -98)
 
 	-- The outstanding mark, on the same line as "Categories", at the right.
 	local outstandingCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
 	outstandingCheck:SetSize(22, 22)
-	outstandingCheck:SetPoint("TOPLEFT", frame, "TOPLEFT", FRAME_WIDTH - 170, -72)
+	outstandingCheck:SetPoint("TOPLEFT", frame, "TOPLEFT", FRAME_WIDTH - 170, -94)
 	outstandingCheck.isOutstanding = true
 	local outstandingLabel = newLabel(outstandingCheck, ns.CategoryText(ns.OUTSTANDING), "GameFontHighlight")
 	outstandingLabel:SetPoint("LEFT", outstandingCheck, "RIGHT", 2, 0)
@@ -1068,19 +1082,23 @@ function UI.InstallUnitMenus()
 			end, function()
 				ns.ToggleOutstanding(name)
 			end)
-			local function currentRole()
+			local function currentRoles()
 				local entry = key and ns.db.players[key]
-				return entry and entry.role
+				return entry and ns.RolesOf(entry) or {}
 			end
-			local roleMenu = root:CreateButton("Role: " .. ns.RoleLabel(currentRole()))
+			local function plays(id)
+				local entry = key and ns.db.players[key]
+				return entry ~= nil and ns.HasRole(entry, id)
+			end
+			local roleMenu = root:CreateButton("Role: " .. ns.RolesLabel(currentRoles()))
 			for _, role in ipairs(ns.ROLES) do
 				local id = role.id
-				roleMenu:CreateRadio(ns.RoleLabel(id), function() return currentRole() == id end, function()
-					ns.ChangeRole(name, id)
+				roleMenu:CreateCheckbox(ns.RoleLabel(id), function() return plays(id) end, function()
+					ns.ToggleRole(name, id)
 				end)
 			end
-			roleMenu:CreateRadio(ns.RoleLabel(nil), function() return currentRole() == nil end, function()
-				ns.ChangeRole(name, nil)
+			roleMenu:CreateButton(ns.RoleLabel(nil), function()
+				ns.ChangeRoles(name, nil)
 			end)
 		end))
 	end

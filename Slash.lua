@@ -14,7 +14,7 @@ local HELP = {
 	"|cffffd060/pn show|r <player>  print the note",
 	"|cffffd060/pn del|r <player>  delete the note",
 	"|cffffd060/pn star|r <player>  mark a player as outstanding, or take the mark off",
-	"|cffffd060/pn role|r <player> <tank | healer | dps | none>  set the role a player plays",
+	"|cffffd060/pn role|r <player> <tank | healer | dps | none>  set the roles a player plays; several with commas: tank,dps",
 	"|cffffd060/pn list|r [category | negative | positive | outstanding | tank | healer | dps]  list the players with a note",
 	"|cffffd060/pn cats|r  list the categories",
 	"|cffffd060/pn newcat|r [+|-]<name>  create a category: + positive, - negative, neither neutral",
@@ -258,13 +258,13 @@ function commands.star(args)
 	end
 end
 
--- "/pn role Fetto Vandike healer": the last word is the role, everything before it the player
--- (your target when there is nothing before it).
+-- "/pn role Fetto Vandike healer" or "... tank,dps": the last word is the roles, everything before
+-- it the player (your target when there is nothing before it). The roles replace the old ones.
 function commands.role(args)
 	local playerText, roleText = ns.Trim(args):match("^(.-)%s*(%S+)$")
-	local role = roleText and ns.FindRole(roleText)
-	if not role then
-		ns.Print("Which role? /pn role <player> <tank | healer | dps | none>")
+	local roles = roleText and ns.ParseRoles(roleText)
+	if not roles then
+		ns.Print("Which role? /pn role <player> <tank | healer | dps | none>, several with commas: tank,dps")
 		return
 	end
 	local name, rest = parseWholePlayer(playerText)
@@ -276,13 +276,12 @@ function commands.role(args)
 	if not name then
 		return
 	end
-	local roleId = role ~= "none" and role.id or nil
-	local ok, why = ns.ChangeRole(name, roleId)
+	local ok, why = ns.ChangeRoles(name, roles)
 	if not ok then
 		ns.Print(why)
 		return
 	end
-	if roleId then
+	if next(roles) then
 		afterSave(ns.MakeKey(name))
 	end
 end
