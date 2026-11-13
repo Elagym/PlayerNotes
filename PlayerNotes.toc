@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: PlayerNotes
 ## Notes: Private notes and categories on players, with a reminder in your chat when you group with them. /pn
-## Version: 1.8.0
+## Version: 1.8.1
 ## Author: Elagym
 ## OptionalDeps: LFGForever
 ## X-Website: https://github.com/Elagym/PlayerNotes
