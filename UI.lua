@@ -10,7 +10,7 @@ local _, ns = ...
 local UI = {}
 ns.UI = UI
 
-local FRAME_WIDTH, FRAME_HEIGHT = 700, 560
+local FRAME_WIDTH, FRAME_HEIGHT = 700, 582
 local LIST_WIDTH = 224
 local ROW_HEIGHT = 20
 local PANE_LEFT = LIST_WIDTH + 58
@@ -319,7 +319,9 @@ local function refreshCategories()
 	end
 	widgets.newCategoryLabel:ClearAllPoints()
 	widgets.newCategoryLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, y - 8)
-	widgets.newKindButton:SetText(ns.KindText(state.newKind))
+	for _, radio in ipairs(widgets.kindRadios) do
+		radio:SetChecked(radio.kindId == state.newKind)
+	end
 end
 
 local function loadEditor(key)
@@ -781,29 +783,48 @@ local function buildEditor()
 	newCategoryBox:SetScript("OnEnterPressed", addCategoryFromInput)
 	widgets.newCategoryBox = newCategoryBox
 
-	-- The kind the new category gets; each click moves to the next one.
-	local newKindButton = newButton(frame, ns.KindText(state.newKind), 80)
-	newKindButton:SetPoint("LEFT", newCategoryBox, "RIGHT", 6, 0)
-	newKindButton:SetScript("OnClick", function()
-		for i, kind in ipairs(ns.KINDS) do
-			if kind.id == state.newKind then
-				state.newKind = ns.KINDS[i % #ns.KINDS + 1].id
-				break
-			end
-		end
-		newKindButton:SetText(ns.KindText(state.newKind))
-	end)
-	widgets.newKindButton = newKindButton
-
 	local addCategory = newButton(frame, "Add", 50)
-	addCategory:SetPoint("LEFT", newKindButton, "RIGHT", 4, 0)
+	addCategory:SetPoint("LEFT", newCategoryBox, "RIGHT", 6, 0)
 	addCategory:SetScript("OnClick", addCategoryFromInput)
 
+	-- The type the new category gets: one radio button per kind, on the line below.
+	local typeLabel = newLabel(frame, "Type:", "GameFontHighlightSmall")
+	typeLabel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", 0, -24)
+	widgets.kindRadios = {}
+	local previous = nil
+	for _, kind in ipairs(ns.KINDS) do
+		local ok, radio = pcall(CreateFrame, "CheckButton", nil, frame, "UIRadioButtonTemplate")
+		if not ok then
+			-- A client without the radio template still gets a box that behaves the same.
+			radio = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+		end
+		radio:SetSize(16, 16)
+		if previous then
+			radio:SetPoint("LEFT", previous.label, "RIGHT", 14, 0)
+		else
+			radio:SetPoint("LEFT", typeLabel, "RIGHT", 8, 0)
+		end
+		radio.kindId = kind.id
+		radio.label = newLabel(radio, ns.KindText(kind.id), "GameFontHighlightSmall")
+		radio.label:SetPoint("LEFT", radio, "RIGHT", 3, 0)
+		-- The word is part of the button: clicking it chooses the type too.
+		radio:SetHitRectInsets(0, -((radio.label:GetStringWidth() or 50) + 3), 0, 0)
+		radio:SetScript("OnClick", function(self)
+			state.newKind = self.kindId
+			for _, other in ipairs(widgets.kindRadios) do
+				other:SetChecked(other.kindId == state.newKind)
+			end
+		end)
+		radio:SetChecked(kind.id == state.newKind)
+		widgets.kindRadios[#widgets.kindRadios + 1] = radio
+		previous = radio
+	end
+
 	local noteLabel = newLabel(frame, "Note")
-	noteLabel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", 0, -28)
+	noteLabel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", 0, -50)
 
 	local notePanel = newPanel(frame)
-	notePanel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", -2, -46)
+	notePanel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", -2, -68)
 	notePanel:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 62)
 
 	local noteScroll = CreateFrame("ScrollFrame", "PlayerNotesNoteScroll", notePanel, "UIPanelScrollFrameTemplate")
