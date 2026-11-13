@@ -59,7 +59,6 @@ local function announce(category, name, result, unit)
 		-- Could be someone else, so no fanfare for this one.
 		DEFAULT_CHAT_FRAME:AddMessage(("   |cff999999Name partly matches your note on %s; this may be a different player.|r"):format(entry.name))
 	else
-		ns.UpdateFromUnit(name, unit)
 		showOnScreen(line)
 		playSound()
 	end
@@ -69,10 +68,17 @@ end
 
 -- Returns false when the name could not be read yet.
 local function checkUnit(unit)
-	if not (ns.db and ns.db.settings.nearbyAlert) then
+	if not ns.db then
 		return true
 	end
 	local name, why = ns.ReadUnitName(unit)
+	if name then
+		-- Every player in sight teaches their class, alerts on or off (Classes.lua).
+		ns.UpdateFromUnit(name, unit)
+	end
+	if not ns.db.settings.nearbyAlert then
+		return true
+	end
 	if not name then
 		if why == "hidden" then
 			Nearby.hidden = Nearby.hidden + 1

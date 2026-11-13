@@ -135,6 +135,7 @@ end
 
 -- The arguments follow the retail event: the sender's name, then the inviter's GUID seventh.
 local function onPartyInvite(sender, _, _, _, _, _, guid)
+	ns.Classes.FromGUID(guid, "invite")
 	local name = ns.Readable(sender)
 	if type(name) ~= "string" then
 		name = nil
@@ -159,6 +160,7 @@ local function onInviteConfirmation()
 	if not guid then
 		return
 	end
+	ns.Classes.FromGUID(guid, "invite")
 	local _, name = GetInviteConfirmationInfo(guid)
 	name = ns.Readable(name)
 	if type(name) ~= "string" then

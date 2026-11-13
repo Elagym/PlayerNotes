@@ -24,9 +24,14 @@ local function nameOnTooltip(tooltip, data)
 	end
 	local name = ns.ReadUnitName(unit)
 	if name then
+		ns.UpdateFromUnit(name, unit)
 		return name
 	end
-	return type(data) == "table" and ns.NameFromGUID(data.guid) or nil
+	if type(data) ~= "table" then
+		return nil
+	end
+	ns.Classes.FromGUID(data.guid, "tooltip")
+	return ns.NameFromGUID(data.guid)
 end
 
 local function addEntry(tooltip, result)

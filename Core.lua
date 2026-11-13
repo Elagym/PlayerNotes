@@ -713,7 +713,8 @@ function ns.ToggleOutstanding(rawName)
 	return on
 end
 
--- The entry for a name, created when needed. Returns entry and key, or nil and the reason.
+-- The entry for a name, created when needed; a new one gets the player's class when the game has
+-- shown it (Classes.lua). Returns entry and key, or nil and the reason.
 function ns.GetOrCreateEntry(rawName)
 	local display, key = ns.ValidateName(rawName)
 	if not display then
@@ -723,6 +724,9 @@ function ns.GetOrCreateEntry(rawName)
 	if not entry then
 		entry = { name = display, note = "", categories = {}, added = time(), updated = time() }
 		ns.db.players[key] = entry
+		if ns.Classes then
+			ns.Guard("class of a new note", ns.Classes.Fill)(entry, key)
+		end
 	end
 	return entry, key
 end
@@ -820,17 +824,17 @@ function ns.FindNotes(rawName)
 end
 
 -- Stores what the game just told us about a player who has a note (class, faction, spelling).
+-- The class is remembered for everyone (Classes.lua), so a note written later still gets it.
 function ns.UpdateFromUnit(rawName, unit)
+	if ns.Classes then
+		ns.Classes.FromUnit(rawName, unit)
+	end
 	local key = ns.MakeKey(rawName)
 	local entry = key and ns.db.players[key]
 	if not entry then
 		return
 	end
 	entry.name = ns.DisplayName(rawName) or entry.name
-	local class = ns.Readable((select(2, UnitClass(unit))))
-	if type(class) == "string" then
-		entry.class = class
-	end
 	local faction = ns.Readable((UnitFactionGroup(unit)))
 	if type(faction) == "string" then
 		entry.faction = faction

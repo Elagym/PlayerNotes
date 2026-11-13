@@ -333,7 +333,7 @@ local function loadEditor(key)
 	end
 	-- A saved player's name is fixed: it shows as plain text, and only a new draft can be typed.
 	widgets.nameBox:SetText(entry and entry.name or "")
-	widgets.nameText:SetText(entry and entry.name or "")
+	widgets.nameText:SetText(entry and ns.ColorName(entry.name, entry.class) or "")
 	if entry then
 		widgets.nameBox:ClearFocus()
 		widgets.nameBox:Hide()
@@ -920,6 +920,8 @@ local function build()
 	buildEditor()
 
 	frame:SetScript("OnShow", function()
+		-- Notes still without a class get one if the game can show that player now.
+		ns.Guard("class check", ns.Classes.FixMissing)()
 		refreshList()
 		refreshCategories()
 		if not state.dirty then
@@ -970,6 +972,19 @@ function UI.OnDataChanged()
 	end
 end
 
+-- A player's class was learned: only the name colours change, so a note being read or typed
+-- is left alone.
+function UI.OnClassesChanged()
+	if not (frame and frame:IsShown()) then
+		return
+	end
+	refreshList()
+	local entry = state.selectedKey and ns.db.players[state.selectedKey]
+	if entry then
+		widgets.nameText:SetText(ns.ColorName(entry.name, entry.class))
+	end
+end
+
 -- Right-click menus on players -------------------------------------------------------------
 
 local UNIT_MENUS = {
@@ -991,6 +1006,8 @@ local function nameFromMenu(contextData)
 	if type(unit) == "string" then
 		local name = ns.ReadUnitName(unit)
 		if name then
+			-- So that "Add note" gets the class even when the player is out of sight by then.
+			ns.Classes.FromUnit(name, unit)
 			return name
 		end
 	end

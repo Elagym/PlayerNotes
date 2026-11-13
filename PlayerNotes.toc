@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: PlayerNotes
 ## Notes: Private notes and categories on players, with a reminder in your chat when you group with them. /pn
-## Version: 1.5.0
+## Version: 1.6.0
 ## Author: Elagym
 ## OptionalDeps: LFGForever
 ## X-Website: https://github.com/Elagym/PlayerNotes
@@ -16,6 +16,7 @@ GroupFinder.lua
 LFGForever.lua
 Tooltip.lua
 Nearby.lua
+Classes.lua
 MinimapButton.lua
 UI.lua
 Slash.lua

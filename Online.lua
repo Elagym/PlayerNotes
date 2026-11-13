@@ -229,6 +229,7 @@ local function readWhoResults(key)
 		local info = C_FriendList.GetWhoInfo(i)
 		local name = info and ns.Readable(info.fullName)
 		if type(name) == "string" then
+			ns.Classes.Learn(name, info.filename, "/who")
 			sampleName = sampleName or name
 			-- The docs promise Name-Realm; a numeric realm is not part of a character name.
 			local otherKey = ns.MakeKey((name:gsub("%-%d+$", "")))

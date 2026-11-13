@@ -494,6 +494,10 @@ function commands.debug()
 	say(("LFG Forever: %s; %d rows seen%s"):format(lfgForever.state, lfgForever.rowsSeen,
 		lfgForever.problem and (" (" .. lfgForever.problem .. ")") or ""))
 	say("player tooltip: " .. tostring(ns.Tooltip.method or "NOT INSTALLED"))
+	local classes = ns.Classes
+	local missing = classes.FixMissing()
+	say(("class colours: %d note(s) still without a class; %d learned this session, last from %s"):format(
+		missing, classes.learned, tostring(classes.lastSource or "-")))
 	local nearby = ns.Nearby
 	say(("nearby: %s; %d players read, %d names hidden, %d alerts, last name: %s"):format(ns.db.settings.nearbyAlert and "on" or "off",
 		nearby.seen, nearby.hidden, nearby.alerts, tostring(nearby.lastName or "-")))

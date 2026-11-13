@@ -42,6 +42,17 @@ local function namesInResult(resultID)
 	if type(leader) == "string" and leader ~= "" then
 		names[1] = leader
 		GroupFinder.lastName = leader
+		-- The listing also tells the class, which colours the name of a player with a note.
+		local leaderInfo = C_LFGList.GetSearchResultLeaderInfo and C_LFGList.GetSearchResultLeaderInfo(resultID)
+		if type(leaderInfo) == "table" then
+			ns.Classes.Learn(leader, leaderInfo.classFilename, "group finder")
+		elseif C_LFGList.GetSearchResultPlayerInfo and (ns.Readable(info.numMembers) or 1) <= 1 then
+			-- A solo listing: its only player is the leader.
+			local solo = C_LFGList.GetSearchResultPlayerInfo(resultID, 1)
+			if type(solo) == "table" then
+				ns.Classes.Learn(leader, solo.classFilename, "group finder")
+			end
+		end
 	end
 	local count = ns.Readable(info.numMembers)
 	if type(count) == "number" and count > 1 and C_LFGList.GetSearchResultPlayerInfo then
@@ -50,6 +61,7 @@ local function namesInResult(resultID)
 			local name = member and ns.Readable(member.name)
 			if type(name) == "string" and name ~= "" then
 				names[#names + 1] = name
+				ns.Classes.Learn(name, member.classFilename, "group finder")
 			end
 		end
 	end
