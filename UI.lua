@@ -228,9 +228,12 @@ end
 local function openSortMenu(owner)
 	MenuUtil.CreateContextMenu(owner, function(_, root)
 		root:CreateTitle("Sort by")
+		-- One choice at a time, the current one marked; names go alphabetically within each.
 		for _, mode in ipairs(ns.SORT_MODES) do
 			local id = mode.id
-			root:CreateButton(mode.label, function()
+			root:CreateRadio(mode.label, function()
+				return sortMode().id == id
+			end, function()
 				ns.db.settings.sort = id
 				refreshList()
 			end)
@@ -727,7 +730,7 @@ local function buildList()
 	widgets.count = newLabel(frame, "", "GameFontDisableSmall")
 	widgets.count:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 16)
 
-	local sortButton = newButton(frame, "Sort: Name", 116)
+	local sortButton = newButton(frame, "Sort: Verdict", 116)
 	sortButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", LIST_WIDTH + 44, 9)
 	sortButton:SetScript("OnClick", openSortMenu)
 	widgets.sortButton = sortButton

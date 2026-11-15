@@ -109,11 +109,14 @@ local DEFAULT_SETTINGS = {
 	datedNotes = true,
 	minimapHidden = false,
 	minimapAngle = 215,
-	sort = "name",
+	sort = "verdict",
 }
 
--- The orders the list can have. `short` goes on the button.
+-- The orders the list can have. `short` goes on the button. Within any of them, players with
+-- the same place are listed alphabetically.
 ns.SORT_MODES = {
+	{ id = "verdict", label = "Good first, caution last", short = "Verdict" },
+	{ id = "verdictRole", label = "Good first by role, caution last", short = "Role" },
 	{ id = "name", label = "Name", short = "Name" },
 	{ id = "updated", label = "Recently changed", short = "Changed" },
 	{ id = "added", label = "Recently added", short = "Added" },
@@ -284,7 +287,7 @@ function ns.InitDB()
 	end
 	local db = PlayerNotesDB
 	local savedVersion = type(db.version) == "number" and db.version or 1
-	db.version = 3
+	db.version = 4
 	if type(db.players) ~= "table" then
 		db.players = {}
 	end
@@ -347,6 +350,10 @@ function ns.InitDB()
 		if db.settings[name] == nil then
 			db.settings[name] = value
 		end
+	end
+	-- Up to 1.8 the list was sorted by name by default; it now starts with the good players.
+	if savedVersion < 4 and db.settings.sort == "name" then
+		db.settings.sort = DEFAULT_SETTINGS.sort
 	end
 	ns.db = db
 end
@@ -952,9 +959,31 @@ local function categoryRanker()
 	end
 end
 
+-- Sorting by verdict: good players first, then neutral, mixed, and caution last.
+local VERDICT_RANK = { positive = 1, neutral = 2, mixed = 3, negative = 4 }
+
+-- The place of a player's first role in ns.ROLES (tank, healer, DPS), after them those without.
+local function roleRank(entry)
+	local first = ns.RolesOf(entry)[1]
+	for i, role in ipairs(ns.ROLES) do
+		if role.id == first then
+			return i
+		end
+	end
+	return #ns.ROLES + 1
+end
+
 -- Lower sorts first; players with the same value go by name.
 local function sortValue(mode)
-	if mode == "updated" then
+	if mode == "verdict" then
+		return function(entry) return VERDICT_RANK[ns.Verdict(entry)] end
+	elseif mode == "verdictRole" then
+		-- Only the good players are grouped by role; the others stay by verdict alone.
+		return function(entry)
+			local rank = VERDICT_RANK[ns.Verdict(entry)]
+			return rank * 10 + (rank == VERDICT_RANK.positive and roleRank(entry) or 0)
+		end
+	elseif mode == "updated" then
 		return function(entry) return -(entry.updated or 0) end
 	elseif mode == "added" then
 		return function(entry) return -(entry.added or 0) end

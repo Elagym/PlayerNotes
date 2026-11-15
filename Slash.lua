@@ -324,7 +324,8 @@ function commands.list(args)
 			return
 		end
 	end
-	local items = ns.SortedEntries(filter)
+	-- In the same order as the window's list.
+	local items = ns.SortedEntries(filter, nil, ns.db.settings.sort)
 	if #items == 0 then
 		ns.Print(filter and "Nobody in that category." or "You have no notes yet. /pn add <player> <text>")
 		return
