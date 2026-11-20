@@ -1096,3 +1096,34 @@ function ns.PrintEntry(entry)
 	ns.Print(ns.VerdictTag(entry) .. ns.ColorName(entry.name, entry.class) .. (tags ~= "" and "  " .. tags or ""))
 	ns.PrintNoteLines(entry)
 end
+
+-- For other addons ------------------------------------------------------------------------------
+-- PlayerNotesAPI.Lookup(name): what your notes say about a player, read only. Any spelling of the
+-- name works ("Fetto Vandike", "Fetto-Vandike"). Returns nil when you have no note on them, else
+-- { verdict = "negative" | "mixed" | "positive" | "neutral", label = "Caution" | "Mixed" | "Good"
+-- or nil, categories = { "Griefer", "Ninja" } (labels, Outstanding first), note = the text or nil }.
+-- EasyLFG uses it to keep players you marked Caution out of its invites.
+PlayerNotesAPI = {
+	version = 1,
+	Lookup = function(name)
+		if not ns.db or type(name) ~= "string" then
+			return nil
+		end
+		local key = ns.MakeKey(name)
+		local entry = key and ns.db.players[key]
+		if not entry or not ns.HasContent(entry) then
+			return nil
+		end
+		local verdict = ns.Verdict(entry)
+		local labels = {}
+		for _, category in ipairs(ns.CategoriesOf({ entry })) do
+			labels[#labels + 1] = category.label
+		end
+		return {
+			verdict = verdict,
+			label = VERDICTS[verdict] and VERDICTS[verdict].label or nil,
+			categories = labels,
+			note = (entry.note and entry.note ~= "") and entry.note or nil,
+		}
+	end,
+}

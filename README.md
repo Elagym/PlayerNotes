@@ -92,6 +92,16 @@ Your notes are saved per account, so all your characters share them.
 - **LFG Forever is optional.** PlayerNotes adds its icons to LFG Forever's list from the outside, without changing LFG Forever. If a future LFG Forever update changes its list, the icons stop appearing there, and everything else keeps working; `/pn debug` shows whether the link is active.
 - **A name can match loosely.** If the game shows only a first name, PlayerNotes can match it to a note on a player with that first name. It then tells you the match may be a different player.
 
+## Other addons
+
+[EasyLFG](https://github.com/Elagym/EasyLFG) reads your notes when it builds a group: it never invites a player you marked **Caution**, and it shows Mixed and Good on its list.
+
+Other addon authors can read your notes too, read only, with `PlayerNotesAPI.Lookup(name)`. It returns nil when you have no note on that player. Otherwise it returns a table with:
+- `verdict`: "negative", "mixed", "positive" or "neutral";
+- `label`: "Caution", "Mixed", "Good", or nil for neutral;
+- `categories`: the category names;
+- `note`: the note text.
+
 ## Reporting a problem
 
 Please [open an issue](https://github.com/Elagym/PlayerNotes/issues) with:
