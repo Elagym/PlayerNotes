@@ -265,8 +265,7 @@ whoFrame:SetScript("OnEvent", ns.Guard("who", function()
 end))
 
 local function sendWho(key, entry, callback)
-	local firstName = (ns.DisplayName(entry.name) or entry.name):match("^%S+")
-	local filter = ('n-"%s"'):format(firstName)
+	local filter = ns.DisplayName(entry.name) or entry.name
 	local query = { key = key, callback = callback }
 	pending = query
 	lastSend = GetTime()
