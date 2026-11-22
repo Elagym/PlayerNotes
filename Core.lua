@@ -204,7 +204,8 @@ function ns.DisplayName(raw)
 		return nil
 	end
 	for i, part in ipairs(parts) do
-		parts[i] = part:sub(1, 1):upper() .. part:sub(2)
+		-- Include any UTF-8 continuation bytes when capitalizing the initial.
+		parts[i] = part:gsub("^.[\128-\191]*", string.upper)
 	end
 	return table.concat(parts, " ")
 end
