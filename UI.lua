@@ -1007,7 +1007,7 @@ local function buildEditor()
 	end)
 	widgets.deleteButton = deleteButton
 
-	local datedLine = newButton(frame, L["Add dated line"], 116)
+	local datedLine = newButton(frame, L["Add dated line"], 180)
 	datedLine:SetPoint("LEFT", deleteButton, "RIGHT", 6, 0)
 	datedLine:SetScript("OnClick", addDatedLine)
 
