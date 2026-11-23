@@ -7,6 +7,7 @@
 --   - a player is in your group: you joined them or they joined you (roster scan)
 
 local _, ns = ...
+local L = ns.L
 
 local ALERT_COOLDOWN = 120 -- seconds: inviting someone who then joins is one reminder, not two
 local RETRY_DELAY = 3      -- seconds between scans while a member's name cannot be read yet
@@ -35,7 +36,7 @@ function ns.Alert(reason, rawName)
 			local tags = ns.EntryTags(entry)
 			ns.Print(ns.VerdictTag(entry) .. reason:format(who) .. (tags ~= "" and "  " .. tags or ""))
 			if result.loose then
-				DEFAULT_CHAT_FRAME:AddMessage(("   |cff999999Name partly matches your note on %s; this may be a different player.|r"):format(entry.name))
+				DEFAULT_CHAT_FRAME:AddMessage(L["   |cff999999Name partly matches your note on %s; this may be a different player.|r"]:format(entry.name))
 			end
 			ns.PrintNoteLines(entry, true)
 		end
@@ -86,7 +87,7 @@ function ns.ScanGroup()
 		if not groupSeen[key] then
 			groupSeen[key] = true
 			if not silentScan then
-				ns.Alert("In your group: %s", member.name)
+				ns.Alert(L["In your group: %s"], member.name)
 			end
 		end
 	end
@@ -123,14 +124,14 @@ local function hookNameFunction(owner, functionName, reason)
 end
 
 local function installHooks()
-	hookNameFunction(C_PartyInfo, "InviteUnit", "You invited %s")
-	hookNameFunction(C_PartyInfo, "ConfirmInviteUnit", "You invited %s")
-	hookNameFunction(C_PartyInfo, "RequestInviteFromUnit", "You asked to join %s")
-	hookNameFunction(C_PartyInfo, "ConfirmRequestInviteFromUnit", "You asked to join %s")
+	hookNameFunction(C_PartyInfo, "InviteUnit", L["You invited %s"])
+	hookNameFunction(C_PartyInfo, "ConfirmInviteUnit", L["You invited %s"])
+	hookNameFunction(C_PartyInfo, "RequestInviteFromUnit", L["You asked to join %s"])
+	hookNameFunction(C_PartyInfo, "ConfirmRequestInviteFromUnit", L["You asked to join %s"])
 	-- Older spellings, only present if this client still has them.
-	hookNameFunction(_G, "InviteUnit", "You invited %s")
-	hookNameFunction(_G, "InviteToGroup", "You invited %s")
-	hookNameFunction(_G, "RequestInviteFromUnit", "You asked to join %s")
+	hookNameFunction(_G, "InviteUnit", L["You invited %s"])
+	hookNameFunction(_G, "InviteToGroup", L["You invited %s"])
+	hookNameFunction(_G, "RequestInviteFromUnit", L["You asked to join %s"])
 end
 
 -- The arguments follow the retail event: the sender's name, then the inviter's GUID seventh.
@@ -145,7 +146,7 @@ local function onPartyInvite(sender, _, _, _, _, _, guid)
 		name = ns.NameFromGUID(guid) or name
 	end
 	if name then
-		ns.Alert("%s invited you", name)
+		ns.Alert(L["%s invited you"], name)
 	end
 end
 
@@ -167,7 +168,7 @@ local function onInviteConfirmation()
 		name = ns.NameFromGUID(guid)
 	end
 	if name then
-		ns.Alert("%s wants to join your group", name)
+		ns.Alert(L["%s wants to join your group"], name)
 	end
 end
 

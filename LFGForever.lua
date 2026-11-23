@@ -15,6 +15,7 @@
 -- only the icons in LFG Forever's list are missing, and /pn debug says why.
 
 local _, ns = ...
+local L = ns.L
 
 local ADDON_NAME = "LFGForever"
 local WINDOW_NAME = "LFGForeverFrame"
@@ -78,7 +79,7 @@ local function findList()
 	local list = type(content) == "table" and content.ListPanel or nil
 	local box = type(list) == "table" and list.ScrollBox or nil
 	if type(box) ~= "table" or type(box.ForEachFrame) ~= "function" or type(box.RegisterCallback) ~= "function" then
-		return nil, "its window is there, but not its list"
+		return nil, L["its window is there, but not its list"]
 	end
 	return list, box
 end
@@ -91,7 +92,7 @@ local function attach(list, box)
 	local events = ScrollBoxListMixin and ScrollBoxListMixin.Event
 	local initialized = events and events.OnInitializedFrame
 	if not initialized then
-		stop("this client has no ScrollBox row callback")
+		stop(L["this client has no ScrollBox row callback"])
 		return
 	end
 	box:RegisterCallback(initialized, function(_, frame)

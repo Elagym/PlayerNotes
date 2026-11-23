@@ -4,6 +4,7 @@
 -- keeps both secret, which it can do for some players, the tooltip simply stays as it was.
 
 local _, ns = ...
+local L = ns.L
 
 local Tooltip = {}
 ns.Tooltip = Tooltip
@@ -39,7 +40,7 @@ local function addEntry(tooltip, result)
 	local tags = ns.EntryTags(entry)
 	tooltip:AddLine(ns.VerdictTag(entry) .. (tags ~= "" and tags or "PlayerNotes"), 0.4, 0.8, 1)
 	if result.loose then
-		tooltip:AddLine(("Name partly matches your note on %s."):format(entry.name), 0.6, 0.6, 0.6, true)
+		tooltip:AddLine(L["Name partly matches your note on %s."]:format(entry.name), 0.6, 0.6, 0.6, true)
 	end
 	ns.AddNoteToTooltip(tooltip, entry, NOTE_LIMIT, NOTE_MAX_LINES)
 end

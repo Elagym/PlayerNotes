@@ -12,6 +12,7 @@
 -- online, offline, maybe, notfound, otherfaction, checking, unchecked, busy, combat, noanswer.
 
 local _, ns = ...
+local L = ns.L
 
 local Online = {}
 ns.Online = Online
@@ -36,7 +37,7 @@ local function describe(level, area)
 	level, area = ns.Readable(level), ns.Readable(area)
 	local parts = {}
 	if type(level) == "number" and level > 0 then
-		parts[#parts + 1] = "level " .. level
+		parts[#parts + 1] = L["level %d"]:format(level)
 	end
 	if type(area) == "string" and area ~= "" then
 		parts[#parts + 1] = area
@@ -47,9 +48,9 @@ end
 local function onlineText(source, level, area)
 	local details = describe(level, area)
 	if details ~= "" then
-		return ("Online: %s (%s)"):format(details, source)
+		return L["Online: %s (%s)"]:format(details, source)
 	end
-	return ("Online (%s)"):format(source)
+	return L["Online (%s)"]:format(source)
 end
 
 -- Certain sources ----------------------------------------------------------------------
@@ -75,9 +76,9 @@ local function fromUnits(key)
 			ns.UpdateFromUnit(name, unit)
 			local inGroup = index >= firstGroupUnit and index <= lastGroupUnit
 			if ns.Readable(UnitIsConnected(unit)) == false then
-				return result("offline", "Offline (in your group)")
+				return result("offline", L["Offline (in your group)"])
 			end
-			return result("online", onlineText(inGroup and "in your group" or "nearby"))
+			return result("online", onlineText(inGroup and L["in your group"] or L["nearby"]))
 		end
 	end
 	return nil
@@ -98,9 +99,9 @@ local function fromFriends(key)
 				return nil
 			end
 			if connected then
-				return result("online", onlineText("friend list", info.level, info.area))
+				return result("online", onlineText(L["friend list"], info.level, info.area))
 			end
-			return result("offline", "Offline (friend list)")
+			return result("offline", L["Offline (friend list)"])
 		end
 	end
 	return nil
@@ -120,9 +121,9 @@ local function fromGuild(key)
 				return nil
 			end
 			if online then
-				return result("online", onlineText("guild", level, zone))
+				return result("online", onlineText(L["guild"], level, zone))
 			end
-			return result("offline", "Offline (guild)")
+			return result("offline", L["Offline (guild)"])
 		end
 	end
 	return nil
@@ -240,13 +241,13 @@ local function readWhoResults(key)
 			-- One side has no surname: it may or may not be the same person.
 			if otherKey and firstPart(otherKey) == firstPart(key)
 				and (not otherKey:find("-", 1, true) or not key:find("-", 1, true)) then
-				maybe = maybe or result("maybe", ("Maybe online: found %s (%s)"):format(ns.DisplayName(name), describe(info.level, info.area)))
+				maybe = maybe or result("maybe", L["Maybe online: found %s (%s)"]:format(ns.DisplayName(name), describe(info.level, info.area)))
 			end
 		end
 	end
 	Online.lastWho.sample = sampleName
 	Online.lastWho.count = count
-	return maybe or result("notfound", "Not found by /who: offline, or not visible to you")
+	return maybe or result("notfound", L["Not found by /who: offline, or not visible to you"])
 end
 
 local function finishWho(outcome, restoreDelay)
@@ -276,15 +277,15 @@ local function sendWho(key, entry, callback)
 	local ok, err = pcall(C_FriendList.SendWho, filter, origin)
 	if not ok then
 		ns.lastError = "SendWho: " .. tostring(err)
-		finishWho(result("noanswer", "/who is not available here"), 0)
-		return result("noanswer", "/who is not available here")
+		finishWho(result("noanswer", L["/who is not available here"]), 0)
+		return result("noanswer", L["/who is not available here"])
 	end
 	C_Timer.After(WHO_TIMEOUT, ns.Guard("who timeout", function()
 		if pending == query then
-			finishWho(result("noanswer", "No answer from /who; click Check to try again"), LATE_ANSWER_GRACE)
+			finishWho(result("noanswer", L["No answer from /who; click Check to try again"]), LATE_ANSWER_GRACE)
 		end
 	end))
-	return result("checking", "Checking with /who...")
+	return result("checking", L["Checking with /who..."])
 end
 
 -- Asking ---------------------------------------------------------------------------------
@@ -305,24 +306,24 @@ function Online.Check(key, options, callback)
 
 	local myFaction = ns.Readable((UnitFactionGroup("player")))
 	if entry.faction and myFaction and entry.faction ~= myFaction then
-		callback(result("otherfaction", "Unknown: /who cannot see the other faction"))
+		callback(result("otherfaction", L["Unknown: /who cannot see the other faction"]))
 		return
 	end
 
 	if pending and pending.key == key then
 		pending.callback = callback
-		callback(result("checking", "Checking with /who..."))
+		callback(result("checking", L["Checking with /who..."]))
 		return
 	end
 
 	local cached = cache[key]
 	if cached and not options.force and GetTime() - cached.at < CACHE_SECONDS then
-		callback(result(cached.result.state, ("%s, %ds ago"):format(cached.result.text, GetTime() - cached.at)))
+		callback(result(cached.result.state, L["%s, %ds ago"]:format(cached.result.text, GetTime() - cached.at)))
 		return
 	end
 
 	if not options.canSendWho then
-		callback(result("unchecked", "Online status not checked yet"))
+		callback(result("unchecked", L["Online status not checked yet"]))
 		return
 	end
 
@@ -332,11 +333,11 @@ function Online.Check(key, options, callback)
 	end
 
 	if InCombatLockdown() then
-		callback(result("combat", "In combat: click Check afterwards"))
+		callback(result("combat", L["In combat: click Check afterwards"]))
 		return
 	end
 	if pending or (lastSend and GetTime() - lastSend < WHO_MIN_INTERVAL) then
-		callback(result("busy", "/who is cooling down: click Check in a few seconds"))
+		callback(result("busy", L["/who is cooling down: click Check in a few seconds"]))
 		return
 	end
 

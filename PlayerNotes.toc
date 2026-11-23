@@ -1,6 +1,7 @@
 ## Interface: 16001
 ## Title: PlayerNotes
 ## Notes: Private notes and categories on players, with a reminder in your chat when you group with them. /pn
+## Notes-ruRU: Личные заметки и категории игроков. Напоминает в чате, когда вы попадаете с ними в одну группу. /pn
 ## Version: 1.10.0
 ## Author: Elagym
 ## OptionalDeps: LFGForever
@@ -9,6 +10,7 @@
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
 ## SavedVariables: PlayerNotesDB
 
+Locales.lua
 Core.lua
 Alerts.lua
 Online.lua

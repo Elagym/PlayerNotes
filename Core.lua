@@ -13,14 +13,15 @@
 --    ("glory-boy"), and ns.FindNotes handles the first-name-only case as a loose match.
 
 local _, ns = ...
+local L = ns.L
 
 ns.MAX_CATEGORIES = 20
 
 -- What a category says about a player. The order is the order of the sections in the window.
 ns.KINDS = {
-	{ id = "positive", label = "Positive", color = "40ff40" },
-	{ id = "negative", label = "Negative", color = "ff5050" },
-	{ id = "neutral", label = "Neutral", color = "aaaaaa" },
+	{ id = "positive", label = "Positive", filter = L["All positive"], color = "40ff40" },
+	{ id = "negative", label = "Negative", filter = L["All negative"], color = "ff5050" },
+	{ id = "neutral", label = "Neutral", filter = L["All neutral"], color = "aaaaaa" },
 }
 
 -- The verdict on a player, from the kinds of their categories. Neutral has no tag.
@@ -38,27 +39,27 @@ local ICON_FOLDER = "Interface\\Icons\\"
 
 -- The icons a category can have. All of them date from the original game.
 ns.ICONS = {
-	{ id = "skull", label = "Skull", path = RAID_ICON .. "8" },
-	{ id = "cross", label = "Cross", path = RAID_ICON .. "7" },
-	{ id = "square", label = "Square", path = RAID_ICON .. "6" },
-	{ id = "moon", label = "Moon", path = RAID_ICON .. "5" },
-	{ id = "triangle", label = "Triangle", path = RAID_ICON .. "4" },
-	{ id = "diamond", label = "Diamond", path = RAID_ICON .. "3" },
-	{ id = "circle", label = "Circle", path = RAID_ICON .. "2" },
-	{ id = "star", label = "Star", path = RAID_ICON .. "1" },
-	{ id = "stealth", label = "Stealth", path = ICON_FOLDER .. "Ability_Stealth" },
-	{ id = "silence", label = "Silence", path = ICON_FOLDER .. "Spell_Shadow_ImpPhaseShift" },
-	{ id = "sprint", label = "Sprint", path = ICON_FOLDER .. "Ability_Rogue_Sprint" },
-	{ id = "coin", label = "Coin", path = ICON_FOLDER .. "INV_Misc_Coin_02" },
-	{ id = "poison", label = "Poison", path = ICON_FOLDER .. "Spell_Nature_CorrosiveBreath" },
-	{ id = "mug", label = "Mug", path = ICON_FOLDER .. "INV_Drink_05" },
-	{ id = "heal", label = "Heal", path = ICON_FOLDER .. "Spell_Holy_Renew" },
-	{ id = "heart", label = "Heart", path = ICON_FOLDER .. "INV_ValentinesCandy" },
-	{ id = "sword", label = "Sword", path = ICON_FOLDER .. "INV_Sword_04" },
-	{ id = "shield", label = "Shield", path = ICON_FOLDER .. "INV_Shield_06" },
-	{ id = "bag", label = "Bag", path = ICON_FOLDER .. "INV_Misc_Bag_08" },
-	{ id = "note", label = "Note", path = ICON_FOLDER .. "INV_Misc_Note_01" },
-	{ id = "crown", label = "Crown", path = ICON_FOLDER .. "INV_Crown_01" },
+	{ id = "skull", label = L["Skull"], path = RAID_ICON .. "8" },
+	{ id = "cross", label = L["Cross"], path = RAID_ICON .. "7" },
+	{ id = "square", label = L["Square"], path = RAID_ICON .. "6" },
+	{ id = "moon", label = L["Moon"], path = RAID_ICON .. "5" },
+	{ id = "triangle", label = L["Triangle"], path = RAID_ICON .. "4" },
+	{ id = "diamond", label = L["Diamond"], path = RAID_ICON .. "3" },
+	{ id = "circle", label = L["Circle"], path = RAID_ICON .. "2" },
+	{ id = "star", label = L["Star"], path = RAID_ICON .. "1" },
+	{ id = "stealth", label = L["Stealth"], path = ICON_FOLDER .. "Ability_Stealth" },
+	{ id = "silence", label = L["Silence"], path = ICON_FOLDER .. "Spell_Shadow_ImpPhaseShift" },
+	{ id = "sprint", label = L["Sprint"], path = ICON_FOLDER .. "Ability_Rogue_Sprint" },
+	{ id = "coin", label = L["Coin"], path = ICON_FOLDER .. "INV_Misc_Coin_02" },
+	{ id = "poison", label = L["Poison"], path = ICON_FOLDER .. "Spell_Nature_CorrosiveBreath" },
+	{ id = "mug", label = L["Mug"], path = ICON_FOLDER .. "INV_Drink_05" },
+	{ id = "heal", label = L["Heal"], path = ICON_FOLDER .. "Spell_Holy_Renew" },
+	{ id = "heart", label = L["Heart"], path = ICON_FOLDER .. "INV_ValentinesCandy" },
+	{ id = "sword", label = L["Sword"], path = ICON_FOLDER .. "INV_Sword_04" },
+	{ id = "shield", label = L["Shield"], path = ICON_FOLDER .. "INV_Shield_06" },
+	{ id = "bag", label = L["Bag"], path = ICON_FOLDER .. "INV_Misc_Bag_08" },
+	{ id = "note", label = L["Note"], path = ICON_FOLDER .. "INV_Misc_Note_01" },
+	{ id = "crown", label = L["Crown"], path = ICON_FOLDER .. "INV_Crown_01" },
 }
 
 -- A player you marked as outstanding. Not a category you can delete but a mark of its own,
@@ -77,9 +78,9 @@ ns.OUTSTANDING = {
 -- bottom of 64).
 local ROLE_TEXTURE = "Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES"
 ns.ROLES = {
-	{ id = "tank", label = "Tank", plural = "Tanks", color = "6fa8ff", coords = { 0, 19, 22, 41 } },
-	{ id = "healer", label = "Healer", plural = "Healers", color = "40ff80", coords = { 20, 39, 1, 20 } },
-	{ id = "dps", label = "DPS", plural = "DPS", color = "ff7060", coords = { 20, 39, 22, 41 } },
+	{ id = "tank", label = L["Tank"], plural = L["Tanks"], color = "6fa8ff", coords = { 0, 19, 22, 41 } },
+	{ id = "healer", label = L["Healer"], plural = L["Healers"], color = "40ff80", coords = { 20, 39, 1, 20 } },
+	{ id = "dps", label = L["DPS"], plural = L["DPS"], color = "ff7060", coords = { 20, 39, 22, 41 } },
 }
 
 local DEFAULT_CATEGORIES = {
@@ -95,6 +96,11 @@ local DEFAULT_CATEGORIES = {
 	{ id = "unhelpful", label = "Unhelpful", color = "c08060", icon = RAID_ICON .. "7", kind = "negative" },
 	{ id = "quitter", label = "Quitter", color = "ff7f9f", icon = ICON_FOLDER .. "Ability_Rogue_Sprint", kind = "negative" },
 }
+
+local defaultById = {}
+for _, category in ipairs(DEFAULT_CATEGORIES) do
+	defaultById[category.id] = category
+end
 
 -- Categories that saved data from before version 3 does not have yet; they are added once.
 local NEW_IN_VERSION_3 = { "skilled", "generous", "asocial", "unhelpful", "quitter" }
@@ -115,12 +121,12 @@ local DEFAULT_SETTINGS = {
 -- The orders the list can have. `short` goes on the button. Within any of them, players with
 -- the same place are listed alphabetically.
 ns.SORT_MODES = {
-	{ id = "verdict", label = "Good first, caution last", short = "Verdict" },
-	{ id = "verdictRole", label = "Good first by role, caution last", short = "Role" },
-	{ id = "name", label = "Name", short = "Name" },
-	{ id = "updated", label = "Recently changed", short = "Changed" },
-	{ id = "added", label = "Recently added", short = "Added" },
-	{ id = "category", label = "Category", short = "Category" },
+	{ id = "verdict", label = L["Good first, caution last"], short = L["Verdict"] },
+	{ id = "verdictRole", label = L["Good first by role, caution last"], short = L["Role"] },
+	{ id = "name", label = L["Name"], short = L["Name"] },
+	{ id = "updated", label = L["Recently changed"], short = L["Changed"] },
+	{ id = "added", label = L["Recently added"], short = L["Added"] },
+	{ id = "category", label = L["Category"], short = L["Category"] },
 }
 
 -- Helpers --------------------------------------------------------------------
@@ -169,7 +175,7 @@ function ns.Guard(label, fn)
 			ns.lastError = label .. ": " .. tostring(err)
 			if not ns.errorShown then
 				ns.errorShown = true
-				ns.Print("|cffff6060Something went wrong; /pn debug has the details.|r")
+				ns.Print(L["|cffff6060Something went wrong; /pn debug has the details.|r"])
 			end
 		end
 	end
@@ -212,11 +218,11 @@ end
 -- For names typed by you. Returns display name and key, or nil and the reason.
 function ns.ValidateName(raw)
 	if type(raw) ~= "string" or ns.Trim(raw) == "" then
-		return nil, "No player name given."
+		return nil, L["No player name given."]
 	end
 	local parts = nameParts(raw)
 	if not parts or #parts > 3 or #raw > 64 or raw:find('[|:;,"%d%c]') then
-		return nil, ("'%s' does not look like a character name."):format(raw)
+		return nil, L["'%s' does not look like a character name."]:format(raw)
 	end
 	return ns.DisplayName(raw), ns.MakeKey(raw)
 end
@@ -294,14 +300,6 @@ function ns.InitDB()
 	local function newCategory(default)
 		return { id = default.id, label = default.label, color = default.color }
 	end
-	local function defaultFor(id)
-		for _, default in ipairs(DEFAULT_CATEGORIES) do
-			if default.id == id then
-				return default
-			end
-		end
-		return nil
-	end
 	if type(db.categories) ~= "table" then
 		db.categories = {}
 		for i, default in ipairs(DEFAULT_CATEGORIES) do
@@ -315,14 +313,14 @@ function ns.InitDB()
 				exists = exists or category.id == id
 			end
 			if not exists and #db.categories < ns.MAX_CATEGORIES then
-				db.categories[#db.categories + 1] = newCategory(defaultFor(id))
+				db.categories[#db.categories + 1] = newCategory(defaultById[id])
 			end
 		end
 	end
 	-- Categories saved by an earlier version get an icon, a kind and an alert setting here, and
 	-- so do new ones. A choice you made is kept, including "no alert".
 	for i, category in ipairs(db.categories) do
-		local default = defaultFor(category.id)
+		local default = defaultById[category.id]
 		if type(category.icon) ~= "string" then
 			category.icon = default and default.icon or CUSTOM_ICONS[(i - 1) % #CUSTOM_ICONS + 1]
 		end
@@ -413,8 +411,41 @@ function ns.FindIcon(text)
 	return nil
 end
 
+-- Saved labels and the public lookup API keep their original spelling.
+function ns.CategoryLabel(category)
+	local default = defaultById[category.id]
+	if category == ns.OUTSTANDING or (default and not category.custom and default.label == category.label) then
+		return L[category.label]
+	end
+	return category.label
+end
+
+-- Keep English IDs lowercase without applying byte-wise case conversion to UTF-8.
+local function categoryId(label)
+	return (label:gsub("[A-Z]", string.lower))
+end
+
+-- Prefer an existing ID so translated labels cannot hijack an old command.
+function ns.FindCategory(text)
+	text = ns.Trim(text)
+	local exact = ns.GetCategory(categoryId(text))
+	if exact then
+		return exact
+	end
+	local translated
+	for _, category in ipairs(ns.db.categories) do
+		if strcmputf8i(text, category.label) == 0 then
+			return category
+		end
+		if not translated and strcmputf8i(text, ns.CategoryLabel(category)) == 0 then
+			translated = category
+		end
+	end
+	return translated
+end
+
 function ns.CategoryText(category)
-	return ns.InlineIcon(category.icon) .. " |cff" .. category.color .. category.label .. "|r"
+	return ns.InlineIcon(category.icon) .. " |cff" .. category.color .. ns.CategoryLabel(category) .. "|r"
 end
 
 -- Kinds -----------------------------------------------------------------------------
@@ -439,9 +470,9 @@ function ns.FindKind(text)
 	return ns.GetKind(KIND_WORDS[ns.Trim(text or ""):lower()])
 end
 
-function ns.KindText(kindId)
+function ns.KindText(kindId, lowercase)
 	local kind = ns.GetKind(kindId) or ns.GetKind("neutral")
-	return "|cff" .. kind.color .. kind.label .. "|r"
+	return "|cff" .. kind.color .. L[lowercase and kind.id or kind.label] .. "|r"
 end
 
 function ns.HasKind(entry, kindId)
@@ -469,7 +500,7 @@ end
 -- "Caution: " in red, "Good: " in green, "Mixed: " in yellow; nothing for neutral.
 function ns.VerdictTag(entry)
 	local look = VERDICTS[ns.Verdict(entry)]
-	return look and ("|cff%s%s:|r "):format(look.color, look.label) or ""
+	return look and ("|cff%s%s:|r "):format(look.color, L[look.label]) or ""
 end
 
 -- The colour of the verdict, as r, g, b, or nil for neutral.
@@ -580,7 +611,7 @@ end
 function ns.RoleLabel(roleId)
 	local role = ns.GetRole(roleId)
 	if not role then
-		return "|cff999999n/a|r"
+		return L["|cff999999n/a|r"]
 	end
 	return ns.RoleIcon(role.id) .. " |cff" .. role.color .. role.label .. "|r"
 end
@@ -689,9 +720,9 @@ function ns.ChangeRoles(rawName, set)
 	local who = ns.ColorName(entry and entry.name or display, entry and entry.class)
 	local list = entry and ns.RolesOf(entry) or {}
 	if #list > 0 then
-		ns.Print(("%s plays %s."):format(who, ns.RolesLabel(list)))
+		ns.Print(L["%s plays %s."]:format(who, ns.RolesLabel(list)))
 	else
-		ns.Print(("%s has no role any more (n/a)."):format(who))
+		ns.Print(L["%s has no role any more (n/a)."]:format(who))
 	end
 	return true
 end
@@ -728,22 +759,23 @@ end
 function ns.AddCategory(label, kindId)
 	label = ns.Trim(label or "")
 	if label == "" then
-		return nil, "Give the category a name."
+		return nil, L["Give the category a name."]
 	end
-	if #label > 24 or label:find('[|,"@%c]') then
-		return nil, "Category names are at most 24 characters, without | , @ or quotes."
+	if strlenutf8(label) > 24 or label:find('[|,"@%c]') then
+		return nil, L["Category names are at most 24 characters, without | , @ or quotes."]
 	end
-	local id = label:lower()
-	if ns.GetCategory(id) then
-		return nil, ("Category '%s' already exists."):format(label)
+	local id = categoryId(label)
+	if ns.FindCategory(label) then
+		return nil, L["Category '%s' already exists."]:format(label)
 	end
 	local categories = ns.db.categories
 	if #categories >= ns.MAX_CATEGORIES then
-		return nil, ("You can have at most %d categories."):format(ns.MAX_CATEGORIES)
+		return nil, L["You can have at most %d categories."]:format(ns.MAX_CATEGORIES)
 	end
 	local category = {
 		id = id,
 		label = label,
+		custom = true,
 		color = CUSTOM_COLORS[#categories % #CUSTOM_COLORS + 1],
 		icon = CUSTOM_ICONS[#categories % #CUSTOM_ICONS + 1],
 		kind = ns.GetKind(kindId) and kindId or "neutral",
@@ -805,9 +837,9 @@ function ns.ToggleOutstanding(rawName)
 	ns.Notify()
 	local who = ns.ColorName(entry and entry.name or ns.DisplayName(rawName), entry and entry.class)
 	if on then
-		ns.Print(("%s is now %s."):format(who, ns.CategoryText(ns.OUTSTANDING)))
+		ns.Print(L["%s is now %s."]:format(who, ns.CategoryText(ns.OUTSTANDING)))
 	else
-		ns.Print(("%s is no longer outstanding."):format(who))
+		ns.Print(L["%s is no longer outstanding."]:format(who))
 	end
 	return on
 end
@@ -880,11 +912,11 @@ function ns.RenameEntry(oldKey, newName)
 	local players = ns.db.players
 	local entry = players[oldKey]
 	if not entry then
-		return nil, "That player has no note any more."
+		return nil, L["That player has no note any more."]
 	end
 	if newKey ~= oldKey then
 		if players[newKey] then
-			return nil, ("%s already has a note."):format(players[newKey].name)
+			return nil, L["%s already has a note."]:format(players[newKey].name)
 		end
 		players[newKey] = entry
 		players[oldKey] = nil
@@ -1058,7 +1090,7 @@ function ns.AddNoteToTooltip(tooltip, entry, limit, maxLines)
 		end
 	end
 	if shortened then
-		tooltip:AddLine(("... more with /pn show \"%s\""):format(entry.name), 0.6, 0.6, 0.6, true)
+		tooltip:AddLine(L["... more with /pn show \"%s\""]:format(entry.name), 0.6, 0.6, 0.6, true)
 	end
 end
 
@@ -1086,7 +1118,7 @@ function ns.PrintNoteLines(entry, brief)
 		end
 	end
 	if shortened then
-		DEFAULT_CHAT_FRAME:AddMessage(("   |cff999999... more with /pn show \"%s\"|r"):format(entry.name))
+		DEFAULT_CHAT_FRAME:AddMessage(L["   |cff999999... more with /pn show \"%s\"|r"]:format(entry.name))
 	end
 end
 

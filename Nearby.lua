@@ -7,6 +7,7 @@
 -- only ever draws on your own screen and plays a sound for you; nothing is sent to anyone.
 
 local _, ns = ...
+local L = ns.L
 
 local Nearby = {}
 ns.Nearby = Nearby
@@ -53,11 +54,11 @@ end
 local function announce(category, name, result, unit)
 	local entry = result.entry
 	local who = ns.ColorName(ns.DisplayName(name), not result.loose and entry.class or nil)
-	local line = ("%s nearby: %s"):format(ns.CategoryText(category), who)
+	local line = L["%s nearby: %s"]:format(ns.CategoryText(category), who)
 	ns.Print(line)
 	if result.loose then
 		-- Could be someone else, so no fanfare for this one.
-		DEFAULT_CHAT_FRAME:AddMessage(("   |cff999999Name partly matches your note on %s; this may be a different player.|r"):format(entry.name))
+		DEFAULT_CHAT_FRAME:AddMessage(L["   |cff999999Name partly matches your note on %s; this may be a different player.|r"]:format(entry.name))
 	else
 		showOnScreen(line)
 		playSound()

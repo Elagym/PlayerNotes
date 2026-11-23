@@ -7,6 +7,7 @@
 -- so the hook is tried again each time an addon finishes loading.
 
 local _, ns = ...
+local L = ns.L
 
 local GroupFinder = {}
 ns.GroupFinder = GroupFinder
@@ -99,7 +100,7 @@ local function showTooltip(icon)
 		local tags = ns.EntryTags(entry)
 		GameTooltip:AddLine(ns.VerdictTag(entry) .. ns.ColorName(entry.name, entry.class) .. (tags ~= "" and "  " .. tags or ""), 1, 1, 1)
 		if match.loose then
-			GameTooltip:AddLine(("Name partly matches: this is %s, and may be a different player."):format(ns.DisplayName(match.name)), 0.6, 0.6, 0.6, true)
+			GameTooltip:AddLine(L["Name partly matches: this is %s, and may be a different player."]:format(ns.DisplayName(match.name)), 0.6, 0.6, 0.6, true)
 		end
 		ns.AddNoteToTooltip(GameTooltip, entry, TOOLTIP_NOTE_LIMIT)
 	end

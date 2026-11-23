@@ -53,6 +53,8 @@ You can delete any of them, change their type or icon, and add your own.
 
 `/pn` and `/playernotes` work the same way.
 
+PlayerNotes uses Russian on a Russian client and English on other clients. On a Russian client, category commands accept both the displayed name (for example, `/pn list Отзывчивый`) and its English ID (`/pn list helpful`).
+
 | Command | What it does |
 |---|---|
 | `/pn` | Open or close the window |
