@@ -2,6 +2,7 @@
 -- dragging moves it around the edge of the minimap.
 
 local _, ns = ...
+local L = ns.L
 
 local MinimapButton = {}
 ns.MinimapButton = MinimapButton
@@ -38,10 +39,10 @@ function MinimapButton.OpenMenu(owner)
 	MenuUtil.CreateContextMenu(owner, function(_, root)
 		root:CreateTitle("PlayerNotes")
 		local isOn, toggle = settingToggle("nearbyAlert")
-		root:CreateCheckbox("Alert when a tagged player is nearby", isOn, toggle)
+		root:CreateCheckbox(L["Alert when a tagged player is nearby"], isOn, toggle)
 		isOn, toggle = settingToggle("nearbySound")
-		root:CreateCheckbox("Play a sound with the alert", isOn, toggle)
-		local categories = root:CreateButton("Categories that alert")
+		root:CreateCheckbox(L["Play a sound with the alert"], isOn, toggle)
+		local categories = root:CreateButton(L["Categories that alert"])
 		for _, category in ipairs(ns.db.categories) do
 			categories:CreateCheckbox(ns.CategoryText(category), function()
 				return category.alert == true
@@ -51,11 +52,11 @@ function MinimapButton.OpenMenu(owner)
 			end)
 		end
 		isOn, toggle = settingToggle("datedNotes")
-		root:CreateCheckbox("Put the date and zone on new notes", isOn, toggle)
+		root:CreateCheckbox(L["Put the date and zone on new notes"], isOn, toggle)
 		root:CreateDivider()
-		root:CreateButton("Hide this button", function()
+		root:CreateButton(L["Hide this button"], function()
 			MinimapButton.SetHidden(true)
-			ns.Print("Minimap button hidden. /pn minimap brings it back.")
+			ns.Print(L["Minimap button hidden. /pn minimap brings it back."])
 		end)
 	end)
 end
@@ -63,10 +64,10 @@ end
 local function showTooltip(self)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 	GameTooltip:AddLine("PlayerNotes", 0.4, 0.8, 1)
-	GameTooltip:AddLine(("%d players with a note"):format(ns.CountPlayers()), 1, 1, 1)
-	GameTooltip:AddLine("Left-click: open the window", 0.8, 0.8, 0.8)
-	GameTooltip:AddLine("Right-click: options", 0.8, 0.8, 0.8)
-	GameTooltip:AddLine("Drag: move this button", 0.8, 0.8, 0.8)
+	GameTooltip:AddLine(L["%d players with a note"]:format(ns.CountPlayers()), 1, 1, 1)
+	GameTooltip:AddLine(L["Left-click: open the window"], 0.8, 0.8, 0.8)
+	GameTooltip:AddLine(L["Right-click: options"], 0.8, 0.8, 0.8)
+	GameTooltip:AddLine(L["Drag: move this button"], 0.8, 0.8, 0.8)
 	GameTooltip:Show()
 end
 

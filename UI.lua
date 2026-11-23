@@ -7,6 +7,7 @@
 -- the window, log out or reload, so there is no Save button.
 
 local _, ns = ...
+local L = ns.L
 
 local UI = {}
 ns.UI = UI
@@ -129,7 +130,7 @@ end
 
 local function filterLabel()
 	if state.filter == ns.OUTSTANDING.id then
-		return ns.OUTSTANDING.label
+		return ns.CategoryLabel(ns.OUTSTANDING)
 	end
 	local role = state.filter and ns.GetRole(state.filter:match("^@role:(.+)$"))
 	if role then
@@ -137,10 +138,10 @@ local function filterLabel()
 	end
 	local kind = state.filter and ns.GetKind(state.filter:match("^@(.+)$"))
 	if kind then
-		return "All " .. kind.label:lower()
+		return kind.filter
 	end
 	local category = state.filter and ns.GetCategory(state.filter)
-	return category and category.label or "All categories"
+	return category and ns.CategoryLabel(category) or L["All categories"]
 end
 
 local function sortMode()
@@ -179,18 +180,18 @@ local function refreshList()
 	end
 	widgets.listChild:SetHeight(math.max(1, #items * ROW_HEIGHT))
 	widgets.filterButton:SetText(filterLabel())
-	widgets.sortButton:SetText("Sort: " .. mode.short)
-	widgets.count:SetText(("%d of %d players"):format(#items, ns.CountPlayers()))
+	widgets.sortButton:SetText(L["Sort: %s"]:format(mode.short))
+	widgets.count:SetText(L["%d of %d players"]:format(#items, ns.CountPlayers()))
 	widgets.empty:SetShown(#items == 0)
 	if #items == 0 then
-		widgets.empty:SetText(ns.CountPlayers() == 0 and "No notes yet.\nClick New to write one." or "Nobody matches.")
+		widgets.empty:SetText(ns.CountPlayers() == 0 and L["No notes yet.\nClick New to write one."] or L["Nobody matches."])
 	end
 end
 
 local function openFilterMenu(owner)
 	MenuUtil.CreateContextMenu(owner, function(_, root)
-		root:CreateTitle("Show players in")
-		root:CreateButton("All categories", function()
+		root:CreateTitle(L["Show players in"])
+		root:CreateButton(L["All categories"], function()
 			state.filter = nil
 			refreshList()
 		end)
@@ -199,7 +200,8 @@ local function openFilterMenu(owner)
 			refreshList()
 		end)
 		for _, kindId in ipairs({ "negative", "positive" }) do
-			root:CreateButton("All " .. ns.KindText(kindId):lower(), function()
+			local kind = ns.GetKind(kindId)
+			root:CreateButton("|cff" .. kind.color .. kind.filter .. "|r", function()
 				state.filter = "@" .. kindId
 				refreshList()
 			end)
@@ -227,7 +229,7 @@ end
 
 local function openSortMenu(owner)
 	MenuUtil.CreateContextMenu(owner, function(_, root)
-		root:CreateTitle("Sort by")
+		root:CreateTitle(L["Sort by"])
 		-- One choice at a time, the current one marked; names go alphabetically within each.
 		for _, mode in ipairs(ns.SORT_MODES) do
 			local id = mode.id
@@ -369,7 +371,7 @@ local function loadEditor(key)
 	refreshCategories()
 	if entry then
 		widgets.deleteButton:Enable()
-		setStatus(entry.updated and ("Last changed " .. date("%Y-%m-%d %H:%M", entry.updated)) or "")
+		setStatus(entry.updated and (L["Last changed %s"]:format(date("%Y-%m-%d %H:%M", entry.updated))) or "")
 	else
 		widgets.deleteButton:Disable()
 		setStatus("")
@@ -382,7 +384,7 @@ local scheduleAutosave -- below, once saving is defined
 -- Something in the editor changed; it saves itself after `delay` seconds (0: right away).
 local function markDirty(delay)
 	state.dirty = true
-	setStatus("|cffffd060Not saved yet|r")
+	setStatus(L["|cffffd060Not saved yet|r"])
 	if not delay and widgets.nameBox:HasFocus() then
 		-- A tick or a button means the name is typed: leaving the box lets a new player save.
 		widgets.nameBox:ClearFocus()
@@ -429,7 +431,7 @@ end
 local function saveDraft(quiet)
 	local players = ns.db.players
 	if state.selectedKey and not players[state.selectedKey] then
-		local why = "That player has no note any more."
+		local why = L["That player has no note any more."]
 		setStatus("|cffff6060" .. why .. "|r")
 		return false, why
 	end
@@ -491,7 +493,7 @@ local function saveDraft(quiet)
 		end
 		refreshList()
 		ns.GroupFinder.Refresh()
-		setStatus("|cff80ff80Saved automatically|r " .. date("%H:%M"))
+		setStatus(L["|cff80ff80Saved automatically|r %s"]:format(date("%H:%M")))
 		return true
 	end
 
@@ -500,7 +502,7 @@ local function saveDraft(quiet)
 	loadEditor(key)
 	refreshList()
 	ns.GroupFinder.Refresh()
-	setStatus(merged and "Added to the note you already had on this player." or "Saved.")
+	setStatus(merged and L["Added to the note you already had on this player."] or L["Saved."])
 	return true
 end
 
@@ -513,7 +515,7 @@ local function saveIfDirty(keepDraft)
 	end
 	local saved, why = saveDraft()
 	if not saved and not keepDraft then
-		ns.Print("A draft could not be saved and was dropped: " .. why)
+		ns.Print(L["A draft could not be saved and was dropped: %s"]:format(why))
 		local text = ns.Trim(widgets.noteBox:GetText() or "")
 		if text ~= "" then
 			DEFAULT_CHAT_FRAME:AddMessage("   " .. text)
@@ -540,11 +542,11 @@ local function autosave()
 		end
 		-- With no Save button, the status says what the draft still needs.
 		if not ns.ValidateName(widgets.nameBox:GetText()) then
-			setStatus("|cffffd060Not saved yet:|r type the player's name (First Surname).")
+			setStatus(L["|cffffd060Not saved yet:|r type the player's name (First Surname)."])
 			return
 		end
 		if not draftHasContent() then
-			setStatus("|cffffd060Not saved yet:|r write a note or tick something to keep this player.")
+			setStatus(L["|cffffd060Not saved yet:|r write a note or tick something to keep this player."])
 			return
 		end
 	end
@@ -613,7 +615,7 @@ end
 -- Dialogs -----------------------------------------------------------------------------
 
 StaticPopupDialogs["PLAYERNOTES_DELETE_PLAYER"] = {
-	text = "Delete your note on %s?",
+	text = L["Delete your note on %s?"],
 	button1 = YES,
 	button2 = NO,
 	OnAccept = function(_, key)
@@ -631,7 +633,7 @@ StaticPopupDialogs["PLAYERNOTES_DELETE_PLAYER"] = {
 }
 
 StaticPopupDialogs["PLAYERNOTES_DELETE_CATEGORY"] = {
-	text = "Delete the category %s? It is removed from every player.",
+	text = L["Delete the category %s? It is removed from every player."],
 	button1 = YES,
 	button2 = NO,
 	OnAccept = function(_, id)
@@ -656,7 +658,7 @@ local function openCategoryMenu(owner, id)
 			return
 		end
 		root:CreateTitle(ns.CategoryText(category))
-		local kindMenu = root:CreateButton("Type: " .. ns.KindText(category.kind))
+		local kindMenu = root:CreateButton(L["Type: %s"]:format(ns.KindText(category.kind)))
 		for _, kind in ipairs(ns.KINDS) do
 			local kindId = kind.id
 			kindMenu:CreateRadio(ns.KindText(kindId), function()
@@ -666,7 +668,7 @@ local function openCategoryMenu(owner, id)
 				ns.Notify()
 			end)
 		end
-		local iconMenu = root:CreateButton("Change icon")
+		local iconMenu = root:CreateButton(L["Change icon"])
 		for _, icon in ipairs(ns.ICONS) do
 			local path = icon.path
 			iconMenu:CreateButton(ns.InlineIcon(path, 16) .. " " .. icon.label, function()
@@ -674,15 +676,15 @@ local function openCategoryMenu(owner, id)
 				ns.Notify()
 			end)
 		end
-		root:CreateCheckbox("Alert when nearby", function()
+		root:CreateCheckbox(L["Alert when nearby"], function()
 			return category.alert == true
 		end, function()
 			category.alert = not category.alert
 			ns.Notify()
 		end)
 		root:CreateDivider()
-		root:CreateButton("Delete category", function()
-			StaticPopup_Show("PLAYERNOTES_DELETE_CATEGORY", category.label, nil, id)
+		root:CreateButton(L["Delete category"], function()
+			StaticPopup_Show("PLAYERNOTES_DELETE_CATEGORY", ns.CategoryLabel(category), nil, id)
 		end)
 	end)
 end
@@ -690,7 +692,7 @@ end
 -- Building the window --------------------------------------------------------------------
 
 local function buildList()
-	local searchLabel = newLabel(frame, "Search:", "GameFontHighlightSmall")
+	local searchLabel = newLabel(frame, L["Search:"], "GameFontHighlightSmall")
 	searchLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -44)
 
 	local search = newInput(frame, LIST_WIDTH - 44)
@@ -701,12 +703,12 @@ local function buildList()
 		refreshList()
 	end)
 
-	local filterButton = newButton(frame, "All categories", 136)
+	local filterButton = newButton(frame, L["All categories"], 136)
 	filterButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -68)
 	filterButton:SetScript("OnClick", openFilterMenu)
 	widgets.filterButton = filterButton
 
-	local newPlayer = newButton(frame, "New", LIST_WIDTH - 136 + 28)
+	local newPlayer = newButton(frame, L["New"], LIST_WIDTH - 136 + 28)
 	newPlayer:SetPoint("LEFT", filterButton, "RIGHT", 4, 0)
 	newPlayer:SetScript("OnClick", function() startNew() end)
 
@@ -730,7 +732,7 @@ local function buildList()
 	widgets.count = newLabel(frame, "", "GameFontDisableSmall")
 	widgets.count:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 16)
 
-	local sortButton = newButton(frame, "Sort: Verdict", 116)
+	local sortButton = newButton(frame, "", 116)
 	sortButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", LIST_WIDTH + 44, 9)
 	sortButton:SetScript("OnClick", openSortMenu)
 	widgets.sortButton = sortButton
@@ -767,7 +769,7 @@ local function newCategoryCheck(index)
 end
 
 local function buildEditor()
-	local checkButton = newButton(frame, "Check", 64)
+	local checkButton = newButton(frame, L["Check"], 82)
 	checkButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -36, -12)
 	checkButton:SetScript("OnClick", function()
 		UI.RefreshOnline(true, true)
@@ -787,7 +789,7 @@ local function buildEditor()
 	onlineText:SetWordWrap(false)
 	widgets.onlineText = onlineText
 
-	local nameLabel = newLabel(frame, "Player")
+	local nameLabel = newLabel(frame, L["Player"])
 	nameLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -44)
 
 	local nameBox = newInput(frame, 210)
@@ -815,7 +817,7 @@ local function buildEditor()
 	nameText:Hide()
 	widgets.nameText = nameText
 
-	local useTarget = newButton(frame, "Use target", 92)
+	local useTarget = newButton(frame, L["Use target"], 92)
 	useTarget:SetPoint("LEFT", nameBox, "RIGHT", 8, 0)
 	widgets.useTarget = useTarget
 	useTarget:SetScript("OnClick", function()
@@ -824,12 +826,12 @@ local function buildEditor()
 			nameBox:SetText(ns.DisplayName(name) or "")
 			markDirty()
 		else
-			setStatus("|cffff6060Target a player first.|r")
+			setStatus(L["|cffff6060Target a player first.|r"])
 		end
 	end)
 
 	-- The roles the player plays, under the name: tick any of them; none ticked is n/a.
-	local roleLabel = newLabel(frame, "Role")
+	local roleLabel = newLabel(frame, L["Role"])
 	roleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -66)
 	widgets.roleChecks = {}
 	local previous = nil
@@ -855,9 +857,9 @@ local function buildEditor()
 		previous = check
 	end
 
-	local categoriesLabel = newLabel(frame, "Categories")
+	local categoriesLabel = newLabel(frame, L["Categories"])
 	categoriesLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -98)
-	local categoriesHint = newLabel(frame, "Right-click a category's name or icon to edit or delete it.", "GameFontDisableSmall")
+	local categoriesHint = newLabel(frame, L["Right-click a category's name or icon to edit or delete it."], "GameFontDisableSmall")
 	categoriesHint:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, -118)
 	widgets.categoriesHint = categoriesHint
 
@@ -875,7 +877,7 @@ local function buildEditor()
 	outstandingCheck:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 		GameTooltip:AddLine(ns.CategoryText(ns.OUTSTANDING))
-		GameTooltip:AddLine("A player you never want to forget: shown first in the list, highlighted, and first in every reminder.", 1, 1, 1, true)
+		GameTooltip:AddLine(L["A player you never want to forget: shown first in the list, highlighted, and first in every reminder."], 1, 1, 1, true)
 		GameTooltip:Show()
 	end)
 	outstandingCheck:SetScript("OnLeave", function()
@@ -887,11 +889,11 @@ local function buildEditor()
 		newCategoryCheck(i)
 	end
 	for _, kind in ipairs(ns.KINDS) do
-		kindHeaders[kind.id] = newLabel(frame, "|cff" .. kind.color .. kind.label .. "|r", "GameFontNormalSmall")
+		kindHeaders[kind.id] = newLabel(frame, ns.KindText(kind.id), "GameFontNormalSmall")
 	end
 
 	-- Placed by refreshCategories, under the last section; the note follows it.
-	local newCategoryLabel = newLabel(frame, "New category:", "GameFontHighlightSmall")
+	local newCategoryLabel = newLabel(frame, L["New category:"], "GameFontHighlightSmall")
 	newCategoryLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANE_LEFT, GRID_TOP - 8)
 	widgets.newCategoryLabel = newCategoryLabel
 
@@ -901,12 +903,12 @@ local function buildEditor()
 	newCategoryBox:SetScript("OnEnterPressed", addCategoryFromInput)
 	widgets.newCategoryBox = newCategoryBox
 
-	local addCategory = newButton(frame, "Add", 50)
+	local addCategory = newButton(frame, L["Add"], 76)
 	addCategory:SetPoint("LEFT", newCategoryBox, "RIGHT", 6, 0)
 	addCategory:SetScript("OnClick", addCategoryFromInput)
 
 	-- The type the new category gets: one radio button per kind, on the line below.
-	local typeLabel = newLabel(frame, "Type:", "GameFontHighlightSmall")
+	local typeLabel = newLabel(frame, L["Type:"], "GameFontHighlightSmall")
 	typeLabel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", 0, -24)
 	widgets.kindRadios = {}
 	local previous = nil
@@ -938,7 +940,7 @@ local function buildEditor()
 		previous = radio
 	end
 
-	local noteLabel = newLabel(frame, "Note")
+	local noteLabel = newLabel(frame, L["Note"])
 	noteLabel:SetPoint("TOPLEFT", newCategoryLabel, "TOPLEFT", 0, -50)
 
 	local notePanel = newPanel(frame)
@@ -994,7 +996,7 @@ local function buildEditor()
 	notePanel:SetScript("OnMouseDown", function() noteBox:SetFocus() end)
 
 	-- No Save button: everything saves by itself.
-	local deleteButton = newButton(frame, "Delete", 90)
+	local deleteButton = newButton(frame, L["Delete"], 90)
 	deleteButton:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PANE_LEFT, 32)
 	deleteButton:SetScript("OnClick", function()
 		local key = state.selectedKey
@@ -1005,7 +1007,7 @@ local function buildEditor()
 	end)
 	widgets.deleteButton = deleteButton
 
-	local datedLine = newButton(frame, "Add dated line", 116)
+	local datedLine = newButton(frame, L["Add dated line"], 116)
 	datedLine:SetPoint("LEFT", deleteButton, "RIGHT", 6, 0)
 	datedLine:SetScript("OnClick", addDatedLine)
 
@@ -1191,7 +1193,7 @@ function UI.InstallUnitMenus()
 				root:CreateDivider()
 			end
 			root:CreateTitle("PlayerNotes")
-			root:CreateButton(hasNote and "Edit note" or "Add note", function()
+			root:CreateButton(hasNote and L["Edit note"] or L["Add note"], function()
 				UI.OpenFor(name)
 			end)
 			root:CreateCheckbox(ns.CategoryText(ns.OUTSTANDING), function()
@@ -1208,7 +1210,7 @@ function UI.InstallUnitMenus()
 				local entry = key and ns.db.players[key]
 				return entry ~= nil and ns.HasRole(entry, id)
 			end
-			local roleMenu = root:CreateButton("Role: " .. ns.RolesLabel(currentRoles()))
+			local roleMenu = root:CreateButton(L["Role: %s"]:format(ns.RolesLabel(currentRoles())))
 			for _, role in ipairs(ns.ROLES) do
 				local id = role.id
 				roleMenu:CreateCheckbox(ns.RoleLabel(id), function() return plays(id) end, function()
